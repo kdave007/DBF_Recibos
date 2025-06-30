@@ -19,6 +19,7 @@ class VentasController:
         self.mapping_manager = mapping_manager
         self.venta_dbf = "VENTA.DBF"  # Header table
         self.partvta_dbf = "PARTVTA.DBF"  # Details table
+       
         
         # Initialize DBF reader
         DBFConnection.set_dll_path(self.config.dll_path)
@@ -46,11 +47,14 @@ class VentasController:
         
         # Get folios to filter details
         folios = [str(header['Folio']) for header in headers]
+        receipts_num = [{'ref_recibo': str(header['ref_recibo']), 'folio': str(header['Folio'])} for header in headers]
+
         
         # Then get details only for these folios
         details_start = time.time()
 
         details_by_folio = self._get_details_for_folios(folios) if folios else {}
+        receipts_by_ref = self._get_receipts_for_folios(receipts_num, start_date, end_date) if receipts_num else {}
 
         details_time = time.time() - details_start
         print(f"Time to get filtered details: {details_time:.2f} seconds")
@@ -59,6 +63,8 @@ class VentasController:
         join_start = time.time()
         for header in headers:
             folio = header['Folio']  # Using the mapped name from mappings.json
+        
+            header['recibos'] = receipts_by_ref.get(str(folio), [])
             header['detalles'] = details_by_folio.get(folio, [])
         join_time = time.time() - join_start
         print(f"Time to join headers with details: {join_time:.2f} seconds")
@@ -117,6 +123,81 @@ class VentasController:
                 details_by_folio[folio].append(transformed)
         
         return details_by_folio
+
+    def _get_receipts_for_folios(self, reference_records: List[str], start_date: date, end_date: date) -> Dict[str, List[Dict[str, Any]]]:
+        """Get sales details for specific reference_records and organize them by folio number.
+        
+        Args:
+            reference_records: List of folio numbers to get details for
+            
+        Returns:
+            Dictionary mapping folio numbers to lists of detail records
+
+        """
+
+        target_table = "FLUJORES.DBF"
+
+        field_mappings = self.mapping_manager.get_field_mappings(target_table)
+
+        str_start = start_date.strftime("%m-%d-%Y")
+        str_end = end_date.strftime("%m-%d-%Y")
+        
+        # Create filter for specific reference_records using OR
+        filters = []
+        
+        # for ref_rec in reference_records:
+            # Pad the folio with leading zeros to 6 digits to match DBF format
+        filter_dict = {
+            'field': 'FECHA',
+            'operator': 'range',
+            'from_value': str_start,  # Format to match DBF M/D/Y
+            'to_value':str_end,  # End of day
+            'is_date': False  # F_
+        }
+        filters.append(filter_dict)
+
+        # Get filtered details
+        read_start = time.time()
+
+        raw_data_str = self.reader.to_json(target_table, 0, filters)
+
+        read_time = time.time() - read_start
+        print(f"Time to read{target_table} with filter: {read_time:.2f} seconds")
+        
+        parse_start = time.time()
+
+        raw_data = json.loads(raw_data_str)
+        print(f' tjhs is list {reference_records}')
+
+        
+        parse_time = time.time() - parse_start
+        print(f"Time to parse {target_table} JSON: {parse_time:.2f} seconds")
+        # print(raw_data_str)
+
+        # Create a dictionary to store matched receipts by folio
+        receipts_by_folio = {}
+        
+        # Process each reference record
+        for ref in reference_records:
+            ref_recibo = ref.get('ref_recibo')
+            folio = ref.get('folio')
+            
+            if ref_recibo and folio:
+                # Initialize an empty list for this folio if it doesn't exist
+                if folio not in receipts_by_folio:
+                    receipts_by_folio[folio] = []
+                
+                # Find all matching records in raw_data where REF_NUM equals ref_recibo
+                for record in raw_data:
+                    if 'REF_NUM' in record and str(record['REF_NUM']) == str(ref_recibo):
+                        # Transform the record and add it to the list for this folio
+                        transformed = self.transform_record(record, field_mappings)
+                        if transformed:
+                            receipts_by_folio[folio].append(transformed)
+
+        print(f' receipts {receipts_by_folio}')
+        
+        return receipts_by_folio
         
     def _get_headers_in_range(self, start_date: date, end_date: date) -> List[Dict[str, Any]]:
         """Get sales headers within the specified date range."""

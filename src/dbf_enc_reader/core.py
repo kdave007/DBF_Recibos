@@ -65,6 +65,7 @@ class DBFReader:
                     join_op = " OR " if use_or else " AND "
                     filter_expr = join_op.join(filter_conditions)
                     print(f"\nApplying AOF filter: {filter_expr}")
+                    
                     try:
                         reader.Filter = filter_expr
                     except Exception as e:
@@ -84,7 +85,7 @@ class DBFReader:
                     field_name = reader.GetName(i)
                     value = reader.GetValue(i)
                     record[field_name] = self.converter.convert_value(value)
-                    
+                 
                 results.append(record)
                 count += 1
             
@@ -104,6 +105,9 @@ class DBFReader:
             JSON string representation of the records
         """
         records = self.read_table(table_name, limit, filters)
+        print(self.get_table_info(table_name))
+
+        print(f' records  {records}')
         
         return json.dumps(records, indent=4, ensure_ascii=False)
 

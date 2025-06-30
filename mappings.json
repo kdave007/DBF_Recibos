@@ -100,7 +100,12 @@
                     "dbf": "CCON_CXC",
                     "velneo_table": "fpg" ,
                     "type": "string"
-            }
+            },
+            "CAMPO1":{
+                "dbf": "CAMPO1",
+                "velneo_table": "ref_recibo" ,
+                "type": "string"
+        }
         }
     },
     "PARTVTA.DBF": {
@@ -151,6 +156,50 @@
                 "type": "string"
             }
         }
+    },
+    "FLUJORES.DBF": {
+        "fields": {
+            "FECHA":{
+                    "dbf": "FECHA",
+                    "velneo_table": "fecha" ,
+                    "type": "string"
+            },
+            "REF_NUM":{
+                    "dbf": "REF_NUM",
+                    "velneo_table": "ref_recibo" ,
+                    "type": "number"
+            },
+            "IMPORTE":{
+                    "dbf": "IMPORTE",
+                    "velneo_table": "importe" ,
+                    "type": "number"
+            },
+            "CVE_CON":{
+                    "dbf": "CVE_CON",
+                    "velneo_table": "clave" ,
+                    "type": "number"
+            }
+        }
+    },
+    "FLUJO01.DBF": {
+        "fields": {
+            "FECHA":{
+                    "dbf": "FECHA",
+                    "velneo_table": "fecha" ,
+                    "type": "string"
+            },
+            "REF_NUM":{
+                    "dbf": "REF-NUM",
+                    "velneo_table": "Folio" ,
+                    "type": "number"
+            },
+            "IMPORTE":{
+                    "dbf": "IMPORTE",
+                    "velneo_table": "importe" ,
+                    "type": "number"
+            }
+        }
     }
+
 }
     
