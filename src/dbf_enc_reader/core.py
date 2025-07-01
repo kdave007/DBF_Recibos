@@ -107,7 +107,7 @@ class DBFReader:
         records = self.read_table(table_name, limit, filters)
         print(self.get_table_info(table_name))
 
-        print(f' records  {records}')
+        # print(f' records  {records}')
         
         return json.dumps(records, indent=4, ensure_ascii=False)
 

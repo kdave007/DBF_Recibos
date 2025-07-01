@@ -109,7 +109,7 @@ class SendRequest:
         folio = record.get('folio')
         dbf_record = record.get('dbf_record', {})
         
-        print(f"Processing CREATE operation for folio {folio}")
+        print(f"Processing CREATE operation for folio {folio} {dbf_record}")
         
         try:
             # Prepare payload for the single record
@@ -138,7 +138,8 @@ class SendRequest:
                     "alm": str(dbf_record.get('alm')),
                     "fac": "1",
                     "off": 1,
-                    "error de campor":1
+                    "detalles": self._format_details(dbf_record),
+                    "recibos": dbf_record.get("recibos")
                 }
             except Exception as e:
                 print(f'Error preparing payload: {e}')
@@ -146,13 +147,13 @@ class SendRequest:
             
             # Send the record
             print(f"Sending record for folio {folio}")
-            post_data = json.dumps(single_payload, cls=CustomJSONEncoder)
+            post_data = json.dumps(single_payload, cls=CustomJSONEncoder, indent=4)
             print(f"POST Request URL: {base_url}?api_key={api_key}")
-            print(f"POST Request Data: {post_data}")
+            print(f"POST Request Data:\n{post_data}")
 
 
-            # print("STOP")
-            # sys.exit()
+            print("STOP")
+            sys.exit()
             
             response = requests.post(
                 f"{base_url}?api_key={api_key}", 
@@ -587,5 +588,27 @@ class SendRequest:
             print(f"Error formatting hour: {e}")
             return f"{hour_value}:00:00"  # Return original if parsing fails
             
-    def update_lote_hash(self):
-        pass  # Return original if parsing fails
+    def _format_details(self, parent_ref):
+        records = parent_ref.get('detalles')
+        array_payload = []
+        for record in records:
+            single_payload = {
+                        "alm":str(record.get('alm')),
+                        "art": record.get('art'),
+                        "und_med":1,
+                        "can_und": record.get('cantidad'),
+                        "can":record.get('cantidad'),
+                        "emp_div": str(record.get('emp_div')),
+                        "emp": str(record.get('emp')),
+                        "fch": self._format_date_to_iso(parent_ref.get("fecha")),
+                        "hor":self._format_hour_to_12h(record.get('hor')),
+                        "pre": float(record.get('imp_part', 0)) + float(record.get('iva_part', 0)),
+                        "por_dto": record.get('descuento'),
+                        "reg_iva_vta":record.get('reg_iva_vta'),
+                        # "vta_fac": parent_ref.get('parent_id'),
+                        "clt":record.get('clt'),
+                        "mov_tip":record.get('mov_tip'),
+                        "cal_arr":1
+                    }
+            array_payload.append(single_payload)
+        return array_payload
