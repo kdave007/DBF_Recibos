@@ -139,7 +139,7 @@ class SendRequest:
                     "fac": "1",
                     "off": 1,
                     "detalles": self._format_details(dbf_record),
-                    "recibos": dbf_record.get("recibos"),
+                    "recibos": self._format_receipt(dbf_record),
                     "usr":1,
                     "aut_usr":1,
                     "usr":1,
@@ -156,8 +156,8 @@ class SendRequest:
             print(f"POST Request Data:\n{post_data}")
 
 
-            # print("STOP")
-            # sys.exit()
+            print("STOP")
+            sys.exit()
             
             response = requests.post(
                 f"{base_url}?api_key={api_key}", 
@@ -614,5 +614,24 @@ class SendRequest:
                         "mov_tip":record.get('mov_tip'),
                         "cal_arr":1
                     }
+            array_payload.append(single_payload)
+        return array_payload
+
+    def _format_receipt(self, parent_ref):
+        records = parent_ref.get('recibos')
+        array_payload = []
+     
+        for record in records:
+            single_payload = {
+                        "fch": self._format_date_to_iso(parent_ref.get("fecha")),
+                        "ref_recibo": record.get('ref_recibo'),
+                        "importe": record.get('importe'),
+                        "caja_bco": record.get('caja_bco'),
+                        "tienda": record.get('tienda'),
+                        "ref_tipo": record.get('ref_tipo'),
+                        "hora": record.get('hora'),
+                        "num_doc": f'{record.get('plaza')}-{record.get('tienda')}-{record.get('ref_tipo')}-{record.get('ref_recibo')}'
+                    }
+            print(record)        
             array_payload.append(single_payload)
         return array_payload

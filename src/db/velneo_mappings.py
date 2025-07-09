@@ -329,5 +329,62 @@ class VelneoMappings:
             if conn:
                 conn.close()
 
+    def get_from_general_plaza(self):
+        """Get the Velneo ID for an plaza (company) from general_misc table
+        
+        Args:
+            reference: The reference to look for (id_psi)
+            
+        Returns:
+            int: The Velneo ID (id_velneo) if found, None otherwise
+        """
+        try:
+            conn = psycopg2.connect(**self.config)
+            cursor = conn.cursor()
+            
+            query = """
+            SELECT id_velneo FROM general_misc 
+            WHERE title = 'plaza'
+            """
+            
+            cursor.execute(query)
+            result = cursor.fetchone()
+            
+            return result[0] if result else None
+            
+        except Exception as e:
+            logging.error(f"Error retrieving plaza Velneo ID: {e}")
+            return None
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
+
+    def get_caja_banco(self, reference):
+        try:
+            conn = psycopg2.connect(**self.config)
+            cursor = conn.cursor()
+            
+            query = """
+            SELECT velneo FROM caja_banco 
+            WHERE pvsi = %s
+            LIMIT 1
+            """
+            
+            cursor.execute(query, (reference,))
+            result = cursor.fetchone()
+            
+            return result[0] if result else None
+        
+        except Exception as e:
+            logging.error(f"Error retrieving payment method Velneo ID: {e}")
+            return None
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
+
 
     

@@ -176,8 +176,23 @@
             },
             "CVE_CON":{
                     "dbf": "CVE_CON",
-                    "velneo_table": "clave" ,
-                    "type": "number"
+                    "velneo_table": "caja_bco" ,
+                    "type": "string"
+            },
+            "TIENDA":{
+                    "dbf": "TIENDA",
+                    "velneo_table": "tienda" ,
+                    "type": "string"
+            },
+            "REF_TIPO":{
+                    "dbf": "REF_TIPO",
+                    "velneo_table": "ref_tipo" ,
+                    "type": "string"
+            },
+            "HORA":{
+                    "dbf": "HORA",
+                    "velneo_table": "hora" ,
+                    "type": "string"
             }
         }
     },
@@ -197,6 +212,26 @@
                     "dbf": "IMPORTE",
                     "velneo_table": "importe" ,
                     "type": "number"
+            },
+            "CVE_CON":{
+                    "dbf": "CVE_CON",
+                    "velneo_table": "caja_bco" ,
+                    "type": "string"
+            },
+            "TIENDA":{
+                    "dbf": "TIENDA",
+                    "velneo_table": "tienda" ,
+                    "type": "string"
+            },
+            "REF_TIPO":{
+                    "dbf": "REF_TIPO",
+                    "velneo_table": "ref_tipo" ,
+                    "type": "string"
+            },
+            "HORA":{
+                    "dbf": "HORA",
+                    "velneo_table": "hora" ,
+                    "type": "string"
             }
         }
     }

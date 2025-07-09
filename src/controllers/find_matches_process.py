@@ -257,6 +257,18 @@ class MatchesProcess:
                             # Add mapped fields to the original detail record
                             for key, value in detail_mapped.items():
                                 processed_results['data'][i]['detalles'][j][key] = value
+                    
+                    # Process the receipts records if they exist
+                    if 'recibos' in record and isinstance(record['recibos'], list):
+                        for n, receipt in enumerate(record['recibos']):
+                            receipt_with_refs = receipt.copy()
+                            
+                             # Get mapped fields for the detail
+                            recepit_mapped = data_mapper.process_record_rec(receipt_with_refs)
+                            
+                            # Add mapped fields to the original detail record
+                            for key, value in recepit_mapped.items():
+                                processed_results['data'][i]['recibos'][n][key] = value
         
         return processed_results
 

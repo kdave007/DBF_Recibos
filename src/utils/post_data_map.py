@@ -198,6 +198,40 @@ class DataMap:
         except Exception as e:
             logging.error(f"Error mapping articulo with ref {ref}: {e}")
             return None
+
+    def apply_map_plaza(self) -> Optional[int]:
+        """Get the Velneo ID for empresa from the database
+        
+        Args:
+            ref: The reference code from the DBF record (not used in current implementation)
+            
+        Returns:
+            int: The mapped Velneo ID or None if not found
+        """
+        try:
+            # Note: ref parameter is kept for consistency but not used in the current implementation
+            return self.velneo_mappings.get_from_general_plaza()
+        except Exception as e:
+            logging.error(f"Error mapping empresa: {e}")
+            return None
+    
+    def apply_map_caja_banco(self, ref: str) -> Optional[int]:
+        """Get the Velneo ID for caja_banco from the database
+        
+        Args:
+            ref: The reference code from the DBF record
+            
+        Returns:
+            int: The mapped Velneo ID or None if not found
+        """
+        if not ref:
+            return None
+            
+        try:
+            return self.velneo_mappings.get_caja_banco(ref)
+        except Exception as e:
+            logging.error(f"Error mapping articulo with ref {ref}: {e}")
+            return None
     
     def process_record_fac(self, record: Dict[str, Any]) -> Dict[str, Any]:
         """Process a complete record by applying all relevant mappings
@@ -264,6 +298,27 @@ class DataMap:
         result['clt'] = self.apply_map_cliente()
 
         # print(f' MAP DETAIL AFTER {result}')
+   
+        return result
+    
+
+    def process_record_rec(self, record: Dict[str, Any]) -> Dict[str, Any]:
+        """Process a complete record by applying all relevant mappings
+        
+        Args:
+            record: Dictionary containing the DBF record data
+            
+        Returns:
+            Dict[str, Any]: The processed record with mapped values
+        """
+        result = record.copy()
+        # print(f' MAP DETAIL BEFORE {record}')
+        
+        # Apply mappings based on available fields in the record
+        
+        result['caja_bco'] = self.apply_map_caja_banco(record['caja_bco'])
+
+        result['plaza'] = self.apply_map_plaza()
    
         return result
 

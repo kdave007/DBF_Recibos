@@ -204,7 +204,7 @@ class SendDetails:
                     "pre": float(record.get('imp_part', 0)) + float(record.get('iva_part', 0)),
                     "por_dto": record.get('descuento'),
                     "reg_iva_vta":record.get('reg_iva_vta'),
-                    "vta_fac": parent_ref.get('parent_id'),
+                    # "vta_fac": parent_ref.get('parent_id'),
                     "clt":record.get('clt'),
                     "mov_tip":record.get('mov_tip'),
                     "cal_arr":1
