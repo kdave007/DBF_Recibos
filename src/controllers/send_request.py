@@ -103,7 +103,10 @@ class SendRequest:
 
         headers = {
             "Content-Type": "application/json",
-            "Accept": "application/json"
+         
+             "accept": "*/*",
+  
+            "accept-encoding": "gzip, deflate, br",
         }
         
         folio = record.get('folio')
@@ -120,8 +123,8 @@ class SendRequest:
                     "emp_div": str(dbf_record.get('emp_div')),
                     "num_doc": folio,
                     "clt": dbf_record.get('clt'),
-                    # "fpg": dbf_record.get('fpg'),
-                    "fpg": 20,
+                    "fpg": dbf_record.get('fpg'),
+                    # "fpg": 20,
                     "cmr": dbf_record.get('cmr'),
                     "fch": self._format_date_to_iso(dbf_record.get("fecha")),
                     # "tot_fac": dbf_record.get("total_bruto"),
@@ -156,11 +159,12 @@ class SendRequest:
             print(f"POST Request Data:\n{post_data}")
 
 
-            print("STOP")
-            sys.exit()
+            # print("STOP")
+            # sys.exit()
             
             response = requests.post(
                 f"{base_url}?api_key={api_key}", 
+                # "http://localhost:3000",
                 headers = headers,
                 data=post_data
             )
@@ -175,15 +179,15 @@ class SendRequest:
                     response_json = response.json()
                     print(f"Response JSON for folio {folio}: {response_json}")
                     
-                    if 'vta_fac_g' not in response_json:
-                        print(f"Key 'vta_fac_g' not found in response for folio {folio}. Full response: {response_json}")
-                        raise KeyError("'vta_fac_g' key not found in response")
+                    # if 'vta_fac_g' not in response_json:
+                    #     print(f"Key 'vta_fac_g' not found in response for folio {folio}. Full response: {response_json}")
+                    #     raise KeyError("'vta_fac_g' key not found in response")
                     
-                    if not response_json['vta_fac_g']:
-                        print(f"'vta_fac_g' is empty for folio {folio}. Full response: {response_json}")
-                        raise ValueError("'vta_fac_g' is empty in response")
+                    # if not response_json['vta_fac_g']:
+                    #     print(f"'vta_fac_g' is empty for folio {folio}. Full response: {response_json}")
+                    #     raise ValueError("'vta_fac_g' is empty in response")
                     
-                    # Process each item in the response
+                    #CHECK THIS VALIDATION ON HOW THE RESPONSE IS GOING TO BE. TODO check this validation
                     for resp_item in response_json['vta_fac_g']:
                         id_value = resp_item.get('id')
                         folio_str = str(resp_item.get('num_doc'))
@@ -196,12 +200,13 @@ class SendRequest:
                             'total_partidas': len(dbf_record.get('detalles', [])),
                             'hash': record.get('dbf_hash', ''),
                             'details': dbf_record.get('detalles', []),
+                            'receipts': dbf_record.get('recibos', []),
                             'status': response.status_code
                         })
                         
                         print(f"Successfully processed response for folio {folio_str}")
                 except Exception as e:
-                    print(f"Error processing response for folio {folio}: {str(e)}")
+                    print(f"Error processing response for folio  aa {folio}: {(e)}")
                     # Add to failed results
                     results['failed'].append({
                         'folio': folio,

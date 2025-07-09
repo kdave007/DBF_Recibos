@@ -30,7 +30,7 @@ class OP:
 
 
     def _create(self, records):
-        base_url = "https://c8.velneo.com:17262/api/vLatamERP_db_dat/v2/fac_doc"
+        base_url = "https://c8.velneo.com:17262/api/vLatamERP_db_dat/v2/_process/fac_doc"
         api_key = "123456"
         for record in records:
             print(f'RECORD FOUND {record}')
