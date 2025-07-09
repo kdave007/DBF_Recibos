@@ -139,7 +139,11 @@ class SendRequest:
                     "fac": "1",
                     "off": 1,
                     "detalles": self._format_details(dbf_record),
-                    "recibos": dbf_record.get("recibos")
+                    "recibos": dbf_record.get("recibos"),
+                    "usr":1,
+                    "aut_usr":1,
+                    "usr":1,
+                    "por_dto":0
                 }
             except Exception as e:
                 print(f'Error preparing payload: {e}')
@@ -152,8 +156,8 @@ class SendRequest:
             print(f"POST Request Data:\n{post_data}")
 
 
-            print("STOP")
-            sys.exit()
+            # print("STOP")
+            # sys.exit()
             
             response = requests.post(
                 f"{base_url}?api_key={api_key}", 

@@ -30,7 +30,7 @@ class OP:
 
 
     def _create(self, records):
-        base_url = "https://c8.velneo.com:17262/api/vLatamERP_db_dat/v2/vta_fac_g"
+        base_url = "https://c8.velneo.com:17262/api/vLatamERP_db_dat/v2/fac_doc"
         api_key = "123456"
         for record in records:
             print(f'RECORD FOUND {record}')
@@ -71,35 +71,35 @@ class OP:
 
                     continue
             
-            if first_request_success:
+            # if first_request_success:
 
-                if self.bypass_ca:
-                    parent_ref = {
-                        'parent_id':  111,
-                        'fecha': record['dbf_record'].get('fecha')
-                    }
-                else:    
-                    parent_ref = {
-                        'parent_id':  ca_req_result['success'][0].get('id'),
-                        'fecha': ca_req_result['success'][0].get('fecha_emision')
-                    }
+            #     if self.bypass_ca:
+            #         parent_ref = {
+            #             'parent_id':  111,
+            #             'fecha': record['dbf_record'].get('fecha')
+            #         }
+            #     else:    
+            #         parent_ref = {
+            #             'parent_id':  ca_req_result['success'][0].get('id'),
+            #             'fecha': ca_req_result['success'][0].get('fecha_emision')
+            #         }
                 
-                print(f"Ready to process details request for folio: {record.get('folio')}")
+            #     print(f"Ready to process details request for folio: {record.get('folio')}")
                 
-                det_req_results = self.send_det.req_post(record['dbf_record'].get('detalles'), parent_ref)
+            #     det_req_results = self.send_det.req_post(record['dbf_record'].get('detalles'), parent_ref)
 
-                if det_req_results['failed']:
-                    #one request failed, so skip to next CA
-                    continue
+            #     if det_req_results['failed']:
+            #         #one request failed, so skip to next CA
+            #         continue
                 
-                # Update the record status to indicate details were processed successfully
-                self.api_track._pa_completed(parent_ref['parent_id'])
-                self.api_track.update_create_details(det_req_results['records'])
+            #     # Update the record status to indicate details were processed successfully
+            #     self.api_track._pa_completed(parent_ref['parent_id'])
+            #     self.api_track.update_create_details(det_req_results['records'])
                 
-                # Call after request handler
-                emp =  record['dbf_record']['detalles'][0].get('emp')
-                emp_div =  record['dbf_record']['detalles'][0].get('emp_div')
-                self._after_request(parent_ref['parent_id'], emp, emp_div)
+            #     # Call after request handler
+            #     emp =  record['dbf_record']['detalles'][0].get('emp')
+            #     emp_div =  record['dbf_record']['detalles'][0].get('emp_div')
+            #     self._after_request(parent_ref['parent_id'], emp, emp_div)
                 
 
     def _update(self, records):
