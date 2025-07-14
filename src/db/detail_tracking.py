@@ -327,7 +327,7 @@ class DetailTracking:
                         folio_counters[folio] += 1
                         
                         # Create composite ID from folio and index
-                        composite_id = f"{folio}-{folio_counters[folio]}"
+                        id = detail['id']
                         
                         # Get current date if fecha is not provided
                         fecha = detail.get('fecha')
@@ -343,11 +343,11 @@ class DetailTracking:
                         
                         # Extract values for better debugging
                         detail_hash = detail.get('detail_hash') or detail.get('hash_detalle')
-                        estado = detail.get('estado', 'pendiente')
+                        estado = detail.get('estado', 'completado')
                         operation = detail.get('operation') or detail.get('accion', 'create')
                         
                         params = (
-                            composite_id,
+                            id,
                             folio,
                             detail_hash,
                             fecha,

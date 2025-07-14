@@ -36,12 +36,10 @@ class OP:
             print(f'RECORD FOUND {record}')
             print(f'------')
             
-            # First request - can be bypassed
-            first_request_success = False
             
             if self.bypass_ca:
                 print(f"Bypassing first API call for folio: {record.get('folio')}")
-                first_request_success = True  # Pretend it was successful
+                 
             else:
                 # Make the first API call
                 ca_req_result = self.send_req.create(record, base_url, api_key)
@@ -51,15 +49,14 @@ class OP:
                     print(f"Successfully processed first request for folio: {record.get('folio')}")
                     #insert in the db the posted CA record
                     self.api_track._create_op(ca_req_result['success'][0])
-                    
-                    first_request_success = True
-
-                    #update if it is a record retry    
+                    #TODO
+                    #here insert in DB the PARTIDAS and RECIBOS 
+                     #update if it is a record retry    
                     self._retry_completed(record)
                 else:
                     print(f"Failed to process first request for folio: {record.get('folio')}")
                     
-                    self.error.insert(f"Failed to process first request for folio: {record.get('folio')}", self.class_name)
+                    self.error.insert(f"Failed process folio: {record.get('folio')}, "+f"{ ca_req_result['failed'][0]['error_msg']}", self.class_name)
 
                     if ca_req_result['failed']:
                         for failure in ca_req_result['failed']:

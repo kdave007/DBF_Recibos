@@ -13,6 +13,8 @@ class APIResponseTracking:
         # Initialize ResponseTracking with the configuration dictionary
         self.resp_tracking = ResponseTracking(self.db_config)
 
+        self.resp_detail_tracking = DetailTracking(self.db_config)
+
     # def update_tracker(self, responses_status):
 
     #     status_create = self._create_op(responses_status['create'])
@@ -74,7 +76,8 @@ class APIResponseTracking:
             fecha_date
         )
    
-
+    def _details_completed(self, details):
+        return self.resp_detail_tracking.batch_insert_details(details)
             
 
     def _update_op(self, results):

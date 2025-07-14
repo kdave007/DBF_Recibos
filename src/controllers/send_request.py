@@ -152,6 +152,7 @@ class SendRequest:
                 print(f'Error preparing payload: {e}')
                 raise
             
+            print(f' OG RECORD AS : {dbf_record}')
             # Send the record
             print(f"Sending record for folio {folio}")
             post_data = json.dumps(single_payload, cls=CustomJSONEncoder, indent=4)
@@ -179,21 +180,19 @@ class SendRequest:
                     response_json = response.json()
                     print(f"Response JSON for folio {folio}: {response_json}")
                     
-                    # if 'vta_fac_g' not in response_json:
-                    #     print(f"Key 'vta_fac_g' not found in response for folio {folio}. Full response: {response_json}")
-                    #     raise KeyError("'vta_fac_g' key not found in response")
+                    # Check if the response has the expected structure
+                    if 'STATUS' not in response_json or response_json['STATUS'] != 'OK':
+                        print(f"Invalid response status for folio {folio}. Full response: {response_json}")
+                        raise ValueError("Invalid response status in response")
                     
-                    # if not response_json['vta_fac_g']:
-                    #     print(f"'vta_fac_g' is empty for folio {folio}. Full response: {response_json}")
-                    #     raise ValueError("'vta_fac_g' is empty in response")
-                    
-                    #CHECK THIS VALIDATION ON HOW THE RESPONSE IS GOING TO BE. TODO check this validation
-                    for resp_item in response_json['vta_fac_g']:
-                        id_value = resp_item.get('id')
-                        folio_str = str(resp_item.get('num_doc'))
+                    # Process CA (Cabecera) data
+                    if 'CA' in response_json and response_json['CA']:
+                        ca_data = response_json['CA']
+                        id_value = ca_data.get('id')
+                        folio_str = str(ca_data.get('folio'))
                         
-                        # Add to success results
-                        results['success'].append({
+                        # Create success entry
+                        success_entry = {
                             'folio': folio_str,
                             'id': id_value,
                             'fecha_emision': dbf_record.get('fecha'),
@@ -201,8 +200,31 @@ class SendRequest:
                             'hash': record.get('dbf_hash', ''),
                             'details': dbf_record.get('detalles', []),
                             'receipts': dbf_record.get('recibos', []),
-                            'status': response.status_code
-                        })
+                            'status': response.status_code,
+                            'partidas': [],
+                            'complementos': []
+                        }
+                        
+                        # Process PA (Partidas) data
+                        if 'PA' in response_json and isinstance(response_json['PA'], list):
+                            for partida in response_json['PA']:
+                                success_entry['partidas'].append({
+                                    'id': partida.get('id'),
+                                    'art': partida.get('art'),
+                                    'hash':dbf_record['detalles'].get('detail_hash'),
+                                    'details':dbf_record.get('detalles', [])
+                                })
+                        
+                        # Process CO (Complementos) data
+                        if 'CO' in response_json and isinstance(response_json['CO'], list):
+                            for complemento in response_json['CO']:
+                                success_entry['complementos'].append({
+                                    'id': complemento.get('id'),
+                                    'fac':id_value
+                                })
+                        
+                        # Add to success results
+                        results['success'].append(success_entry)
                         
                         print(f"Successfully processed response for folio {folio_str}")
                 except Exception as e:
