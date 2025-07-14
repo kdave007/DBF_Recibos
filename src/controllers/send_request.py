@@ -208,12 +208,32 @@ class SendRequest:
                         # Process PA (Partidas) data
                         if 'PA' in response_json and isinstance(response_json['PA'], list):
                             for partida in response_json['PA']:
-                                success_entry['partidas'].append({
+                                art_value = partida.get('art')
+                                # Find matching detail in dbf_record.get('detalles', []) based on art
+                                matching_detail = None
+                                for detail in dbf_record.get('detalles', []):
+                                    if detail.get('art') == art_value:
+                                        matching_detail = detail
+                                        break
+                                
+                                partida_data = {
                                     'id': partida.get('id'),
-                                    'art': partida.get('art'),
-                                    'hash':dbf_record['detalles'].get('detail_hash'),
-                                    'details':dbf_record.get('detalles', [])
-                                })
+                                    'art': art_value,
+                                    'folio': folio,
+                                }
+                                
+                                # Add additional fields from matching detail if found
+                                if matching_detail:
+                                    partida_data['detail_hash'] = matching_detail.get('hash_detalle', '')
+                                    # Check for REF in both uppercase and lowercase keys
+                                    if 'REF' in matching_detail:
+                                        partida_data['ref'] = matching_detail['REF']
+                                    elif 'ref' in matching_detail:
+                                        partida_data['ref'] = matching_detail['ref']
+                                    else:
+                                        partida_data['ref'] = ''
+                                
+                                success_entry['partidas'].append(partida_data)
                         
                         # Process CO (Complementos) data
                         if 'CO' in response_json and isinstance(response_json['CO'], list):
