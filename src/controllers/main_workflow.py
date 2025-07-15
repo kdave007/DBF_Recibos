@@ -8,13 +8,16 @@ from .op import OP
 from datetime import date
 import os
 import sys
+import logging
 
 class WorkFlow:
     def start(self, config, start_date, end_date):
 
         self.matches_process = MatchesProcess()
         result = self.matches_process.compare_data(config, start_date, end_date)
-        # print(f' MAIN W Result {result}')
+        print(f' MAIN W Result {result}')
+
+        
 
         if result:
             #{
@@ -24,8 +27,13 @@ class WorkFlow:
             # #     "total_success": sum(r.get("success", False) for r in update_results + delete_results + add_results),
             # #     "total_failed": sum(not r.get("success", False) for r in update_results + delete_results + add_results)
             # # }
+            if len(result['api_operations']['create'])==0:
+                logging.info('Nothing to send...')
+                logging.info('Finish process...')
+
             op = OP()
-            op.execute(result['api_operations'])
+            op.execute(result['api_operations']['create'])
+        
 
 
         # print("STOP")

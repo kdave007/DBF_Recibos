@@ -1,5 +1,6 @@
 import os
 import sys
+import logging
 from turtle import st
 from pathlib import Path
 from src.config.db_config import PostgresConnection
