@@ -10,6 +10,7 @@ class DetailTracking:
     
     def __init__(self, db_config: dict):
         self.config = db_config
+        
     
     def insert_or_update_detail(self, 
                                id,
@@ -171,7 +172,7 @@ class DetailTracking:
                 details_by_id = {}
                 for detail in details:
                     print(f'batch_replace_by_id {detail}')
-                    detail_id = detail.get('detail_id') or  detail.get('sql_id')#here goes the id not parent id
+                    detail_id = detail.get('id') or  detail.get('sql_id')#here goes the id not parent id
                     if detail_id:
                         if detail_id not in details_by_id:
                             details_by_id[detail_id] = []

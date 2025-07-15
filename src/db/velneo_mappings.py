@@ -386,5 +386,30 @@ class VelneoMappings:
             if conn:
                 conn.close()
 
+    def get_forma_pago(self, reference):
+        try:
+            conn = psycopg2.connect(**self.config)
+            cursor = conn.cursor()
+            
+            query = """
+            SELECT velneo FROM forma_pago 
+            WHERE pvsi = %s
+            LIMIT 1
+            """
+            
+            cursor.execute(query, (reference,))
+            result = cursor.fetchone()
+            
+            return result[0] if result else None
+        
+        except Exception as e:
+            logging.error(f"Error retrieving payment form Velneo ID: {e}")
+            return None
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
+
 
     

@@ -8,6 +8,7 @@ from src.db.error_tracking import ErrorTracking
 from datetime import datetime, date
 import os
 import sys
+import logging
 
 class OP:
     def execute(self, operations):
@@ -23,6 +24,7 @@ class OP:
 
         if "create" in operations:
             self._create(operations['create'])
+            logging.info(f"request to upload data finished")
 
         if "update" in operations:
            self._update(operations['update'])
@@ -47,20 +49,32 @@ class OP:
                 ca_req_result = self.send_req.create(record, base_url, api_key)
 
 
-                # print(f' req result -----> {ca_req_result}')
+                print(f' req result -----> {ca_req_result}')
                 # sys.exit()
                 
                 # Check if the first request was successful
                 if ca_req_result['success']:
                     print(f"Successfully processed first request for folio: {record.get('folio')}")
                     #insert in the db the posted CA record
-                    self.api_track._create_op(ca_req_result['success'][0])
-                    #TODO
+                    fac_result = self.api_track._create_op(ca_req_result['success'][0])
+                    logging.info(f"insertion sql headers success: {fac_result}")
+                    # Process partidas (details)
+                    details_result = self.api_track._details_completed(ca_req_result['success'][0])
+                    print(f"Details processing result: {details_result}")
+                    logging.info(f"insertion sql details success: {details_result}")
+                    
+                    # Process recibos (receipts)
+                    receipts_result = self.api_track._receipts_completed(ca_req_result['success'][0])
+                    print(f"Receipts processing result: {receipts_result}")
+                    logging.info(f"insertion sql receipts success: {receipts_result}")
+
+
                     #here insert in DB the PARTIDAS and RECIBOS 
                      #update if it is a record retry    
                     self._retry_completed(record)
                 else:
                     print(f"Failed to process first request for folio: {record.get('folio')}")
+                    logging.error(f"Failed to process first request for folio: {record.get('folio')}")
                     
                     self.error.insert(f"Failed process folio: {record.get('folio')}, "+f"{ ca_req_result['failed'][0]['error_msg']}", self.class_name)
 

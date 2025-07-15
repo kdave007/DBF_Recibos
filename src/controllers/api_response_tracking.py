@@ -4,6 +4,7 @@ from datetime import datetime, date
 from src.config.db_config import PostgresConnection
 from src.db.response_tracking import ResponseTracking
 from src.db.detail_tracking import DetailTracking
+from src.db.receipt_tracking import ReceiptTracking
 
 
 class APIResponseTracking:
@@ -14,6 +15,7 @@ class APIResponseTracking:
         self.resp_tracking = ResponseTracking(self.db_config)
 
         self.resp_detail_tracking = DetailTracking(self.db_config)
+        self.resp_receipt_tracking = ReceiptTracking(self.db_config)
 
     # def update_tracker(self, responses_status):
 
@@ -76,8 +78,24 @@ class APIResponseTracking:
             fecha_date
         )
    
-    def _details_completed(self, details):
-        return self.resp_detail_tracking.batch_insert_details(details)
+    def _details_completed(self, records):
+        """
+        Process completed details (partidas) from API response
+        """
+        details = records.get('partidas')
+        if details:
+            return self.resp_detail_tracking.batch_replace_by_id(details)
+        return False
+
+    
+    def _receipts_completed(self, records):
+        """
+        Process completed receipts (recibos) from API response
+        """
+        receipts = records.get('recibos')
+        if receipts:
+            return self.resp_receipt_tracking.batch_replace_by_id(receipts)
+        return False
             
 
     def _update_op(self, results):

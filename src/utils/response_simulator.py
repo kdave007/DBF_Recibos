@@ -21,10 +21,13 @@ class ResponseSimulator:
         Returns:
             tuple: (status_code, response_json)
         """
-        # Generate a random ID for the CA (cabecera)
+        # Generate random IDs for the response
         ca_id = random.randint(1, 100)
+        id_cta_cor_t = random.randint(1, 100)
+        id_dtl_doc_cob_t = random.randint(1, 100)
+        id_rbo_cob_t = random.randint(1, 100)
         
-        # Create the base response structure
+        # Create the base response structure with new format
         response = {
             "CA": {
                 "id": ca_id,
@@ -33,7 +36,12 @@ class ResponseSimulator:
             "MENSAJE": "",
             "STATUS": "OK",
             "PA": [],
-            "CO": []
+            "CO": {
+                "ID_CTA_COR_T": id_cta_cor_t,
+                "ID_DTL_DOC_COB_T": id_dtl_doc_cob_t,
+                "ID_RBO_COB_T": id_rbo_cob_t,
+                "ID_DTL_COB_APL_T": []
+            }
         }
         
         # Generate PA (partidas) entries based on details in the record
@@ -45,14 +53,14 @@ class ResponseSimulator:
             }
             response["PA"].append(pa_entry)
         
-        # Generate CO (complementos) entries based on receipts in the record
+        # Generate ID_DTL_COB_APL_T entries based on receipts in the record
         receipts = dbf_record.get('recibos', [])
         for i, receipt in enumerate(receipts, 1):
-            co_entry = {
-                "id": random.randint(1, 1000),
+            dtl_cob_apl_entry = {
+                "ID_DTL_COB_APL_T": random.randint(1, 1000),
                 "_indice": i
             }
-            response["CO"].append(co_entry)
+            response["CO"]["ID_DTL_COB_APL_T"].append(dtl_cob_apl_entry)
         
         return status_code, response
     

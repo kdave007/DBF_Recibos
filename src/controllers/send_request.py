@@ -8,6 +8,7 @@ from src.db.response_tracking import ResponseTracking
 from src.utils.response_simulator import ResponseSimulator
 import requests
 import json
+import logging
 from decimal import Decimal
 from datetime import datetime, date
 
@@ -114,8 +115,13 @@ class SendRequest:
         
         folio = record.get('folio')
         dbf_record = record.get('dbf_record', {})
+
         
-        print(f"Processing CREATE operation for folio {folio} {dbf_record}")
+        # Add decorative logging for sending folio
+        border = "=" * 80
+       
+        logging.info(f"SENDING REQUEST FOR FOLIO: {folio}, det:{len(dbf_record.get('detalles', []))} , rec:{len(dbf_record.get('recibos', []))}")
+       
         
         try:
             # Prepare payload for the single record
@@ -178,16 +184,25 @@ class SendRequest:
             
             print(f"Response Status Code for folio {folio}: {response.status_code}")
             print(f"Response Headers for folio {folio}: {response.headers}")
+
+            logging.info(f"Response Status Code for folio {folio}: {response.status_code}")
             
             # Process the response
+
+            
+
             if response.status_code in [200, 201, 202, 204]:
                 try:
                     # Parse response JSON
                     response_json = response.json()
-                    print(f"Response JSON for folio {folio}: {response_json}")
+                    formatted_json = json.dumps(response_json, indent=4, sort_keys=False)
+                    print(f"Response JSON for folio {folio}:\n{formatted_json}")
                     
+                   
                     # Check if the response has the expected structure
                     if 'STATUS' not in response_json or response_json['STATUS'] != 'OK':
+
+                        logging.info(f"Response Status Code for folio {folio}: {response_json}")
                         print(f"Invalid response status for folio {folio}. Full response: {response_json}")
                         raise ValueError("Invalid response status in response")
                     
@@ -242,20 +257,67 @@ class SendRequest:
                                 
                                 success_entry['partidas'].append(partida_data)
                         
-                        # Process CO (Complementos) data
-                        if 'CO' in response_json and isinstance(response_json['CO'], list):
-                            for complemento in response_json['CO']:
-                                success_entry['recibos'].append({
-                                    'id': complemento.get('id'),
-                                    'id_fac':id_value
-                                })
+                        # Process CO (RECIBOS COBRADOS) data with new structure
+                        if 'CO' in response_json and isinstance(response_json['CO'], dict):
+                            co_data = response_json['CO']
+                            
+                            # Extract common IDs from CO object
+                            id_cta_cor_t = co_data.get('ID_CTA_COR_T')
+                            id_dtl_doc_cob_t = co_data.get('ID_DTL_DOC_COB_T')
+                            id_rbo_cob_t = co_data.get('ID_RBO_COB_T')
+                            
+                            # Process ID_DTL_COB_APL_T array which contains receipt mappings
+                            dtl_cob_apl_entries = co_data.get('ID_DTL_COB_APL_T', [])
+                            
+                            for receipt_entry in dtl_cob_apl_entries:
+                                # Get the _indice from the receipt entry
+                                indice = receipt_entry.get('_indice')
+                                
+                                # Initialize receipt data with basic fields and all IDs
+                                receipt_data = {
+                                    'id': receipt_entry.get('ID_DTL_COB_APL_T'),
+                                    'id_cta_cor_t': id_cta_cor_t,
+                                    'id_dtl_doc_cob_t': id_dtl_doc_cob_t,
+                                    'id_rbo_cob_t': id_rbo_cob_t,
+                                    'id_fac': id_value,
+                                    'folio': folio_str,  # From CA
+                                }
+                                
+                                # Find matching receipt in dbf_record.get('recibos', []) based on _indice
+                                matching_receipt = None
+                                if indice is not None and 1 <= indice <= len(dbf_record.get('recibos', [])):
+                                    matching_receipt = dbf_record.get('recibos', [])[indice - 1]
+                                
+                                # Add additional fields from matching receipt if found
+                                if matching_receipt:
+                                    # Add num_ref from the matching receipt
+                                    receipt_data['num_ref'] = matching_receipt.get('ref_recibo', '')
+                                    # Add fecha from the matching receipt (fch)
+                                    fecha = matching_receipt.get('fch', dbf_record.get('fecha'))
+                                    # Ensure fecha is a date object without time component
+                                    if isinstance(fecha, datetime):
+                                        receipt_data['fecha_emision'] = fecha.date()
+                                    else:
+                                        receipt_data['fecha_emision'] = fecha
+                                else:
+                                    receipt_data['num_ref'] = ''
+                                    fecha = dbf_record.get('fecha')
+                                    # Ensure fecha is a date object without time component
+                                    if isinstance(fecha, datetime):
+                                        receipt_data['fecha_emision'] = fecha.date()
+                                    else:
+                                        receipt_data['fecha_emision'] = fecha
+                                
+                                success_entry['recibos'].append(receipt_data)
                         
                         # Add to success results
                         results['success'].append(success_entry)
                         
                         print(f"Successfully processed response for folio {folio_str}")
+                        logging.info(f"Successfully processed response for folio {folio_str}")
                 except Exception as e:
                     print(f"Error processing response for folio  aa {folio}: {(e)}")
+                    logging.info(f"Error processing response for folio  aa {folio}: {(e)}")
                     # Add to failed results
                     results['failed'].append({
                         'folio': folio,
@@ -269,6 +331,7 @@ class SendRequest:
                 # Failed request
                 error_message = f"Request failed with status {response.status_code}: {response.text}"
                 print(f"Error for folio {folio}: {error_message}")
+                logging.info(f"Request failed with status {response.status_code}: {response.text}")
                 
                 results['failed'].append({
                     'folio': folio,
@@ -280,6 +343,7 @@ class SendRequest:
                 })
                 
         except Exception as e:
+            logging.info(f"Exception during create operation: {str(e)}")
             error_message = f"Exception during create operation: {str(e)}"
             print(error_message)
             # Mark the record as failed
