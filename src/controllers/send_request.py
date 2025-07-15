@@ -11,9 +11,13 @@ import json
 import logging
 from decimal import Decimal
 from datetime import datetime, date
+from dotenv import load_dotenv
 
-# Set debug flag - set to True to use simulated responses instead of real API calls
-DEBUG_MODE = True
+# Load environment variables
+load_dotenv()
+
+# Set debug flag from .env - set to True to use simulated responses instead of real API calls
+DEBUG_MODE = os.getenv('DEBUG_MODE', 'True').lower() == 'true'
 
 class CustomJSONEncoder(json.JSONEncoder):
     def default(self, obj):

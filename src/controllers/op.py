@@ -9,6 +9,10 @@ from datetime import datetime, date
 import os
 import sys
 import logging
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 class OP:
     def execute(self, operations):
@@ -34,8 +38,9 @@ class OP:
 
 
     def _create(self, records):
-        base_url = "https://c8.velneo.com:17262/api/vLatamERP_db_dat/v2/_process/pro_vta_fac"
-        api_key = "123456"
+        # Read API configuration from .env file
+        base_url = os.getenv('API_BASE_URL', 'https://c8.velneo.com:17262/api/vLatamERP_db_dat/v2/_process/pro_vta_fac')
+        api_key = os.getenv('API_KEY', '123456')
         for record in records:
             print(f'RECORD FOUND {record}')
             print(f'------')
