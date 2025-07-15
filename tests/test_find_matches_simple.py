@@ -20,10 +20,25 @@ except ImportError as e:
 
 def main():
     print("=== Starting simple test for MatchesProcess ===")
-     # Let's try with the exact date from your screenshot: 20/03/2025
+       # Let's try with the exact date from your screenshot: 20/03/2025
+    # start_date = date(2025, 5, 5)  # year month day
+    # end_date = date(2025, 5, 5)  # year month day
+    
+    # Import and use DateManager to get dates
+    from src.utils.date_manager import DateManager
+    date_manager = DateManager()
+    start_date, end_date = date_manager.get_dates()
+    
+    print(f"Start date: {start_date} - {type(start_date)}")
+    print(f"End date: {end_date} - {type(end_date)}")
+    
+    # Exit after printing dates
+    # sys.exit(0)
+    
+    # Original code (won't be executed due to sys.exit above)
     start_date = date(2025, 5, 5)  # year month day
     end_date = date(2025, 5, 5)  # year month day
-
+    
     process = WorkFlow()
     
     print("Calling compare_batches()...")

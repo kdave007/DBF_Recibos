@@ -6,6 +6,8 @@ from ..dbf_enc_reader.core import DBFReader
 from ..dbf_enc_reader.connection import DBFConnection
 from ..dbf_enc_reader.mapping_manager import MappingManager
 from ..config.dbf_config import DBFConfig
+import os
+import sys
 
 class VentasController:
     def __init__(self, mapping_manager: MappingManager, config: DBFConfig):
@@ -227,9 +229,12 @@ class VentasController:
 
         transformed_data = []
         for record in raw_data:
-            transformed = self.transform_record(record, field_mappings)
-            if transformed:
-                transformed_data.append(transformed)
+            # print(f'RECORD RAW {record.get('TIPO_DOC')}' )
+            # sys.exit()
+            if record.get('TIPO_DOC') == 'FA':#only add FA records
+                transformed = self.transform_record(record, field_mappings)
+                if transformed:
+                    transformed_data.append(transformed)
         
         return transformed_data
 

@@ -6,6 +6,8 @@ from src.config.db_config import PostgresConnection
 from src.db.retries_tracking import RetriesTracking
 from src.db.error_tracking import ErrorTracking
 from datetime import datetime, date
+import os
+import sys
 
 class OP:
     def execute(self, operations):
@@ -30,7 +32,7 @@ class OP:
 
 
     def _create(self, records):
-        base_url = "https://c8.velneo.com:17262/api/vLatamERP_db_dat/v2/_process/fac_doc"
+        base_url = "https://c8.velneo.com:17262/api/vLatamERP_db_dat/v2/_process/pro_vta_fac"
         api_key = "123456"
         for record in records:
             print(f'RECORD FOUND {record}')
@@ -43,6 +45,10 @@ class OP:
             else:
                 # Make the first API call
                 ca_req_result = self.send_req.create(record, base_url, api_key)
+
+
+                # print(f' req result -----> {ca_req_result}')
+                # sys.exit()
                 
                 # Check if the first request was successful
                 if ca_req_result['success']:
