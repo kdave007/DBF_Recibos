@@ -59,12 +59,12 @@ class DBFReader:
                             f"{f['field']}{f['operator']} '{f['value']}'"
                         )
 
-                print(f'HERE ------ {filter_conditions}')        
+                # print(f'HERE ------ {filter_conditions}')        
                 
                 if filter_conditions:
                     join_op = " OR " if use_or else " AND "
                     filter_expr = join_op.join(filter_conditions)
-                    print(f"\nApplying AOF filter: {filter_expr}")
+                    # print(f"\nApplying AOF filter: {filter_expr}")
                     
                     try:
                         reader.Filter = filter_expr

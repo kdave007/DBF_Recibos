@@ -31,10 +31,12 @@ class OP:
             logging.info(f"request to upload data finished")
 
         if "update" in operations:
-           self._update(operations['update'])
+            pass
+        #    self._update(operations['update'])
 
         if "delete" in operations:
-            self._delete(operations['delete'])     
+            pass
+            # self._delete(operations['delete'])     
 
 
     def _create(self, records):

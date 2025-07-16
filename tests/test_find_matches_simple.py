@@ -63,9 +63,9 @@ def main():
     # Exit after printing dates
     # sys.exit(0)
     
-    # Original code (won't be executed due to sys.exit above)
-    start_date = date(2025, 5, 5)  # year month day
-    end_date = date(2025, 5, 5)  # year month day
+    #Original code (won't be executed due to sys.exit above)
+    start_date = date(2025, 7, 3)  # year month day
+    end_date = date(2025, 7, 6)  # year month day
     
     process = WorkFlow()
 
@@ -89,7 +89,7 @@ def main():
         config = DBFConfig(
             # No need to specify these values as they'll be loaded from .env
             # dll_path, encryption_password, and source_directory will be loaded from .env
-            limit_rows=500  # Limit to 500 sales for testing
+            limit_rows=10000  # Limit to 500 sales for testing
         )
         result = process.start(config, start_date, end_date)
         if result:

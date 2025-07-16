@@ -13,6 +13,7 @@ class DBFConfig:
     
     def __init__(self, dll_path=None, encryption_password=None, source_directory=None, limit_rows=None):
         # Load from .env if values not provided
+        limit_rows=None
         load_dotenv()
         
         self.dll_path = dll_path or os.getenv('DBF_DLL_PATH')

@@ -138,8 +138,10 @@ class VentasController:
         """
 
         target_table = "FLUJORES.DBF"
+        target_table_2 = "FLUJO01.DBF"
 
         field_mappings = self.mapping_manager.get_field_mappings(target_table)
+        field_mappings_2 = self.mapping_manager.get_field_mappings(target_table_2)
 
         str_start = start_date.strftime("%m-%d-%Y")
         str_end = end_date.strftime("%m-%d-%Y")
@@ -161,26 +163,28 @@ class VentasController:
         # Get filtered details
         read_start = time.time()
 
-        raw_data_str = self.reader.to_json(target_table, 0, filters)#TODO HERE CHECK IF EMPTY FLUJORES CHECK 01
-        #  if table_name == 'FLUJORES.DBF':
-        #     records = self.read_table(table_name, limit, filters)
-        #     print(self.get_table_info(table_name))
-
-            # if len(records) == 0:
-            #     logging.warning('FLUJORES empty, checking FLUJO01')
-            #     print('FLUJORES empty, checking FLUJO01')
-            #     records = self.read_table('FLUJO01.DBF', limit, filters)
-            #     print(self.get_table_info(table_name))
+        raw_data_str = self.reader.to_json(target_table, 0, filters)
+        raw_data_2_str = self.reader.to_json(target_table_2, 0, filters)
 
         read_time = time.time() - read_start
-        print(f"Time to read{target_table} with filter: {read_time:.2f} seconds")
+        print(f"Time to read tables with filter: {read_time:.2f} seconds")
         
         parse_start = time.time()
 
-        raw_data = json.loads(raw_data_str)
-        print(f' tjhs is list {reference_records}')
-
+        # Parse both JSON strings
+        raw_data_1 = json.loads(raw_data_str)
+        raw_data_2 = json.loads(raw_data_2_str)
         
+        # Combine the data from both tables
+        raw_data = raw_data_1 + raw_data_2
+        
+        print(f"Records from {target_table}: {len(raw_data_1)}")
+        print(f"Records from {target_table_2}: {len(raw_data_2)}")
+        print(f"Total combined records: {len(raw_data)}")
+        
+
+      
+
         parse_time = time.time() - parse_start
         print(f"Time to parse {target_table} JSON: {parse_time:.2f} seconds")
         # print(raw_data_str)
@@ -206,7 +210,7 @@ class VentasController:
                         if transformed:
                             receipts_by_folio[folio].append(transformed)
 
-        print(f' receipts {receipts_by_folio}')
+        # print(f' receipts {receipts_by_folio}')
         
         return receipts_by_folio
         
@@ -238,8 +242,7 @@ class VentasController:
 
         transformed_data = []
         for record in raw_data:
-            # print(f'RECORD RAW {record.get('TIPO_DOC')}' )
-            # sys.exit()
+          
             if record.get('TIPO_DOC') == 'FA':#only add FA records
                 transformed = self.transform_record(record, field_mappings)
                 if transformed:

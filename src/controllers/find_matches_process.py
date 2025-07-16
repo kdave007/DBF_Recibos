@@ -47,7 +47,7 @@ class MatchesProcess:
         #fetch dbf data
         dbf_results = self.get_dbf_data(config, start_date, end_date)
 
-        print(dbf_results)
+        # print(dbf_results)
 
         # Process DBF data through DataMap for API formatting
         dbf_results = self.db_map_implementations(dbf_results)
