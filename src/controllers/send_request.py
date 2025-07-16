@@ -215,6 +215,7 @@ class SendRequest:
                         ca_data = response_json['CA']
                         id_value = ca_data.get('id')
                         folio_str = str(ca_data.get('folio'))
+                        logging.info(f"Response fac id {id_value}")
                         
                         # Create success entry
                         success_entry = {

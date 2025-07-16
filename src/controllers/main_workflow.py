@@ -20,6 +20,7 @@ class WorkFlow:
         
 
         if result:
+            
             #{
             # #     "update": update_results,
             # #     "delete": delete_results,
@@ -32,7 +33,7 @@ class WorkFlow:
                 logging.info('Finish process...')
 
             op = OP()
-            op.execute(result['api_operations']['create'])
+            op.execute(result['api_operations'])
         
 
 
