@@ -161,7 +161,16 @@ class VentasController:
         # Get filtered details
         read_start = time.time()
 
-        raw_data_str = self.reader.to_json(target_table, 0, filters)
+        raw_data_str = self.reader.to_json(target_table, 0, filters)#TODO HERE CHECK IF EMPTY FLUJORES CHECK 01
+        #  if table_name == 'FLUJORES.DBF':
+        #     records = self.read_table(table_name, limit, filters)
+        #     print(self.get_table_info(table_name))
+
+            # if len(records) == 0:
+            #     logging.warning('FLUJORES empty, checking FLUJO01')
+            #     print('FLUJORES empty, checking FLUJO01')
+            #     records = self.read_table('FLUJO01.DBF', limit, filters)
+            #     print(self.get_table_info(table_name))
 
         read_time = time.time() - read_start
         print(f"Time to read{target_table} with filter: {read_time:.2f} seconds")
