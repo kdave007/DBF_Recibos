@@ -1,6 +1,7 @@
 import os
 import sys
 import logging
+import time
 from turtle import st
 from pathlib import Path
 from src.config.db_config import PostgresConnection
@@ -50,7 +51,12 @@ class MatchesProcess:
         # print(dbf_results)
 
         # Process DBF data through DataMap for API formatting
+        print("\n=== Starting db_map_implementations ===")
+        db_map_start_time = time.time()
         dbf_results = self.db_map_implementations(dbf_results)
+        db_map_end_time = time.time()
+        db_map_time = db_map_end_time - db_map_start_time
+        print(f"\n=== db_map_implementations completed in {db_map_time:.2f} seconds ===")
         
         # Obtener registros SQL
         sql_records = self.get_sql_data(start_date, end_date)
@@ -204,8 +210,21 @@ class MatchesProcess:
     def db_map_implementations(self, dbf_results):
         from src.utils.post_data_map import DataMap
         
+        # Initialize timing variables
+        total_header_time = 0
+        total_detail_time = 0
+        total_receipt_time = 0
+        total_hash_time = 0
+        header_count = 0
+        detail_count = 0
+        receipt_count = 0
+        
         # Initialize the DataMap class
+        data_mapper_start = time.time()
         data_mapper = DataMap()
+        data_mapper_end = time.time()
+        data_mapper_init_time = data_mapper_end - data_mapper_start
+        print(f"\nDataMap initialization time: {data_mapper_init_time:.4f} seconds")
         
         # Create a deep copy of the original structure to preserve it
         processed_results = dbf_results.copy()
@@ -228,7 +247,12 @@ class MatchesProcess:
                     }
                     
                     # Get mapped fields for the header
+                    header_start_time = time.time()
                     header_mapped = data_mapper.process_record_fac(header_data)
+                    header_end_time = time.time()
+                    header_time = header_end_time - header_start_time
+                    total_header_time += header_time
+                    header_count += 1
                     
                     # Add mapped fields to the original record
                     for key, value in header_mapped.items():
@@ -253,7 +277,12 @@ class MatchesProcess:
                             detail_with_refs['clt'] = record.get('clt')
                             
                             # Get mapped fields for the detail
+                            detail_start_time = time.time()
                             detail_mapped = data_mapper.process_record_det(detail_with_refs)
+                            detail_end_time = time.time()
+                            detail_time = detail_end_time - detail_start_time
+                            total_detail_time += detail_time
+                            detail_count += 1
                             
                             # Add mapped fields to the original detail record
                             for key, value in detail_mapped.items():
@@ -264,12 +293,24 @@ class MatchesProcess:
                         for n, receipt in enumerate(record['recibos']):
                             receipt_with_refs = receipt.copy()
                             
-                             # Get mapped fields for the detail
+                             # Get mapped fields for the receipt
+                            receipt_start_time = time.time()
                             recepit_mapped = data_mapper.process_record_rec(receipt_with_refs)
+                            receipt_end_time = time.time()
+                            receipt_time = receipt_end_time - receipt_start_time
+                            total_receipt_time += receipt_time
+                            receipt_count += 1
                             
                             # Add mapped fields to the original detail record
                             for key, value in recepit_mapped.items():
                                 processed_results['data'][i]['recibos'][n][key] = value
+        
+        # Print timing summary
+        print(f"\n=== Timing Summary ===")
+        print(f"Header processing: {total_header_time:.4f} seconds for {header_count} headers (avg: {total_header_time/header_count if header_count else 0:.4f} sec/header)")
+        print(f"Detail processing: {total_detail_time:.4f} seconds for {detail_count} details (avg: {total_detail_time/detail_count if detail_count else 0:.4f} sec/detail)")
+        print(f"Receipt processing: {total_receipt_time:.4f} seconds for {receipt_count} receipts (avg: {total_receipt_time/receipt_count if receipt_count else 0:.4f} sec/receipt)")
+        print(f"Total mapping time: {total_header_time + total_detail_time + total_receipt_time:.4f} seconds")
         
         return processed_results
 

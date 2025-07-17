@@ -15,9 +15,9 @@ class WorkFlow:
 
         self.matches_process = MatchesProcess()
         result = self.matches_process.compare_data(config, start_date, end_date)
-        print(f' MAIN W Result {result}')
-        # print("STOP")
-        # sys.exit()
+        #print(f' MAIN W Result {result}')
+        print("STOP")
+        sys.exit()
         
 
         if result:

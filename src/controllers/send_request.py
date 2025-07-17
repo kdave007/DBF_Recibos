@@ -124,15 +124,15 @@ class SendRequest:
         # Add decorative logging for sending folio
         border = "=" * 80
 
-        if len(dbf_record.get('recibos', [])) == 0 or len(dbf_record.get('partidas', [])) == 0 :
-            logging.warning(f"Declined send request for folio {folio} found with {len(dbf_record.get('partidas', []))} partidas and {len(dbf_record.get('recibos', []))} recibos")
+        if len(dbf_record.get('recibos', [])) == 0 or len(dbf_record.get('detalles', [])) == 0 :
+            logging.warning(f"Declined send request for folio {folio} found with {len(dbf_record.get('detalles', []))} detalles and {len(dbf_record.get('recibos', []))} recibos")
             results['failed'].append({
                         'folio': folio,
                         'fecha_emision': dbf_record.get('fecha'),
                         'total_partidas': len(dbf_record.get('detalles', [])),
                         'hash': "",
                         'status': 500,
-                        'error_msg': "Skipped due to empty recibos or partidas"
+                        'error_msg': "Skipped due to empty recibos or detalles"
                     })
             
             return results

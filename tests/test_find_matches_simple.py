@@ -68,8 +68,8 @@ def main():
     # sys.exit(0)
     
     #Original code (won't be executed due to sys.exit above)
-    start_date = date(2025, 7, 6)  # year month day
-    end_date = date(2025, 7, 9)  # year month day
+    # start_date = date(2025, 7, 6)  # year month day
+    # end_date = date(2025, 7, 9)  # year month day
 
     logging.info(f'start date : {start_date} to end_date {end_date}')
     

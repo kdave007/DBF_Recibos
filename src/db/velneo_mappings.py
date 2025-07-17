@@ -1,9 +1,10 @@
 import psycopg2
 from psycopg2 import sql
 from datetime import datetime, date
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any
 import logging
 import pytz
+from src.db.db_connection_pool import DBConnectionPool
 
 
 
@@ -13,11 +14,20 @@ class VelneoMappings:
     
     def __init__(self, db_config: dict):
         self.config = db_config
+        # Initialize the connection pool
+        self.pool = DBConnectionPool(db_config, min_conn=2, max_conn=10)
     
 
     def get_cliente(self):
+        conn = None
+        cursor = None
         try:
-            conn = psycopg2.connect(**self.config)
+            # Get connection from pool
+            conn = self.pool.get_connection()
+            if not conn:
+                logging.error("Could not get database connection from pool")
+                return None
+                
             cursor = conn.cursor()
             
             query = """
@@ -31,13 +41,14 @@ class VelneoMappings:
             return result[0] if result else None
             
         except Exception as e:
-            logging.error(f"Error retrieving almacen Velneo ID: {e}")
+            logging.error(f"Error retrieving cliente Velneo ID: {e}")
             return None
         finally:
             if cursor:
                 cursor.close()
             if conn:
-                conn.close()
+                # Return connection to pool instead of closing
+                self.pool.release_connection(conn)
 
     def get_from_general_alm(self):
         """Get the Velneo ID for an almacen (warehouse) from general_misc table
@@ -48,8 +59,15 @@ class VelneoMappings:
         Returns:
             int: The Velneo ID (id_velneo) if found, None otherwise
         """
+        conn = None
+        cursor = None
         try:
-            conn = psycopg2.connect(**self.config)
+            # Get connection from pool
+            conn = self.pool.get_connection()
+            if not conn:
+                logging.error("Could not get database connection from pool")
+                return None
+                
             cursor = conn.cursor()
             
             query = """
@@ -69,7 +87,8 @@ class VelneoMappings:
             if cursor:
                 cursor.close()
             if conn:
-                conn.close()
+                # Return connection to pool instead of closing
+                self.pool.release_connection(conn)
 
     def get_from_general_serie(self):
         """Get the Velneo ID for a serie from general_misc table
@@ -80,8 +99,15 @@ class VelneoMappings:
         Returns:
             int: The Velneo ID (id_velneo) if found, None otherwise
         """
+        conn = None
+        cursor = None
         try:
-            conn = psycopg2.connect(**self.config)
+            # Get connection from pool
+            conn = self.pool.get_connection()
+            if not conn:
+                logging.error("Could not get database connection from pool")
+                return None
+                
             cursor = conn.cursor()
             
             query = """
@@ -101,7 +127,8 @@ class VelneoMappings:
             if cursor:
                 cursor.close()
             if conn:
-                conn.close()
+                # Return connection to pool instead of closing
+                self.pool.release_connection(conn)
 
     def get_from_general_emp(self):
         """Get the Velneo ID for an empresa (company) from general_misc table
@@ -112,8 +139,15 @@ class VelneoMappings:
         Returns:
             int: The Velneo ID (id_velneo) if found, None otherwise
         """
+        conn = None
+        cursor = None
         try:
-            conn = psycopg2.connect(**self.config)
+            # Get connection from pool
+            conn = self.pool.get_connection()
+            if not conn:
+                logging.error("Could not get database connection from pool")
+                return None
+                
             cursor = conn.cursor()
             
             query = """
@@ -133,7 +167,8 @@ class VelneoMappings:
             if cursor:
                 cursor.close()
             if conn:
-                conn.close()
+                # Return connection to pool instead of closing
+                self.pool.release_connection(conn)
     
     def get_from_general_div(self):
         """Get the Velneo ID for an division (company) from general_misc table
@@ -144,8 +179,15 @@ class VelneoMappings:
         Returns:
             int: The Velneo ID (id_velneo) if found, None otherwise
         """
+        conn = None
+        cursor = None
         try:
-            conn = psycopg2.connect(**self.config)
+            # Get connection from pool
+            conn = self.pool.get_connection()
+            if not conn:
+                logging.error("Could not get database connection from pool")
+                return None
+                
             cursor = conn.cursor()
             
             query = """
@@ -159,13 +201,14 @@ class VelneoMappings:
             return result[0] if result else None
             
         except Exception as e:
-            logging.error(f"Error retrieving empresa Velneo ID: {e}")
+            logging.error(f"Error retrieving division Velneo ID: {e}")
             return None
         finally:
             if cursor:
                 cursor.close()
             if conn:
-                conn.close()
+                # Return connection to pool instead of closing
+                self.pool.release_connection(conn)
 
     def get_metodo_pago(self, reference):
         """Get the Velneo ID for a payment method from metodo_pago table
@@ -176,8 +219,15 @@ class VelneoMappings:
         Returns:
             int: The velneo value if found, None otherwise
         """
+        conn = None
+        cursor = None
         try:
-            conn = psycopg2.connect(**self.config)
+            # Get connection from pool
+            conn = self.pool.get_connection()
+            if not conn:
+                logging.error("Could not get database connection from pool")
+                return None
+                
             cursor = conn.cursor()
             
             query = """
@@ -198,11 +248,19 @@ class VelneoMappings:
             if cursor:
                 cursor.close()
             if conn:
-                conn.close()
+                # Return connection to pool instead of closing
+                self.pool.release_connection(conn)
 
     def get_vendedor(self, reference):
+        conn = None
+        cursor = None
         try:
-            conn = psycopg2.connect(**self.config)
+            # Get connection from pool
+            conn = self.pool.get_connection()
+            if not conn:
+                logging.error("Could not get database connection from pool")
+                return None
+                
             cursor = conn.cursor()
             
             # Convert reference to string to match the character varying column
@@ -218,7 +276,7 @@ class VelneoMappings:
             result = cursor.fetchone()
             
             return result[0] if result else None
-        
+            
         except Exception as e:
             logging.error(f"Error retrieving vendedor Velneo ID: {e}")
             return None
@@ -226,11 +284,19 @@ class VelneoMappings:
             if cursor:
                 cursor.close()
             if conn:
-                conn.close()
+                # Return connection to pool instead of closing
+                self.pool.release_connection(conn)
 
     def get_pais(self, reference):
+        conn = None
+        cursor = None
         try:
-            conn = psycopg2.connect(**self.config)
+            # Get connection from pool
+            conn = self.pool.get_connection()
+            if not conn:
+                logging.error("Could not get database connection from pool")
+                return None
+                
             cursor = conn.cursor()
             
             query = """
@@ -245,17 +311,25 @@ class VelneoMappings:
             return result[0] if result else None
         
         except Exception as e:
-            logging.error(f"Error retrieving payment method Velneo ID: {e}")
+            logging.error(f"Error retrieving pais ID: {e}")
             return None
         finally:
             if cursor:
                 cursor.close()
             if conn:
-                conn.close()
+                # Return connection to pool instead of closing
+                self.pool.release_connection(conn)
 
     def get_tipo_mov(self, reference):
+        conn = None
+        cursor = None
         try:
-            conn = psycopg2.connect(**self.config)
+            # Get connection from pool
+            conn = self.pool.get_connection()
+            if not conn:
+                logging.error("Could not get database connection from pool")
+                return None
+                
             cursor = conn.cursor()
             
             query = """
@@ -270,17 +344,25 @@ class VelneoMappings:
             return result[0] if result else None
         
         except Exception as e:
-            logging.error(f"Error retrieving payment method Velneo ID: {e}")
+            logging.error(f"Error retrieving tipo_movimiento Velneo ID: {e}")
             return None
         finally:
             if cursor:
                 cursor.close()
             if conn:
-                conn.close()
+                # Return connection to pool instead of closing
+                self.pool.release_connection(conn)
 
     def get_articulo(self, reference):
+        conn = None
+        cursor = None
         try:
-            conn = psycopg2.connect(**self.config)
+            # Get connection from pool
+            conn = self.pool.get_connection()
+            if not conn:
+                logging.error("Could not get database connection from pool")
+                return None
+                
             cursor = conn.cursor()
             
             query = """
@@ -295,18 +377,26 @@ class VelneoMappings:
             return result[0] if result else None
         
         except Exception as e:
-            logging.error(f"Error retrieving payment method Velneo ID: {e}")
+            logging.error(f"Error retrieving articulo Velneo ID: {e}")
             return None
         finally:
             if cursor:
                 cursor.close()
             if conn:
-                conn.close()
+                # Return connection to pool instead of closing
+                self.pool.release_connection(conn)
 
     
     def get_tipo_iva(self, reference):
+        conn = None
+        cursor = None
         try:
-            conn = psycopg2.connect(**self.config)
+            # Get connection from pool
+            conn = self.pool.get_connection()
+            if not conn:
+                logging.error("Could not get database connection from pool")
+                return None
+                
             cursor = conn.cursor()
             
             query = """
@@ -321,13 +411,14 @@ class VelneoMappings:
             return result[0] if result else None
         
         except Exception as e:
-            logging.error(f"Error retrieving payment method Velneo ID: {e}")
+            logging.error(f"Error retrieving tipo_iva Velneo ID: {e}")
             return None
         finally:
             if cursor:
                 cursor.close()
             if conn:
-                conn.close()
+                # Return connection to pool instead of closing
+                self.pool.release_connection(conn)
 
     def get_from_general_plaza(self):
         """Get the Velneo ID for an plaza (company) from general_misc table
@@ -338,8 +429,15 @@ class VelneoMappings:
         Returns:
             int: The Velneo ID (id_velneo) if found, None otherwise
         """
+        conn = None
+        cursor = None
         try:
-            conn = psycopg2.connect(**self.config)
+            # Get connection from pool
+            conn = self.pool.get_connection()
+            if not conn:
+                logging.error("Could not get database connection from pool")
+                return None
+                
             cursor = conn.cursor()
             
             query = """
@@ -359,11 +457,19 @@ class VelneoMappings:
             if cursor:
                 cursor.close()
             if conn:
-                conn.close()
+                # Return connection to pool instead of closing
+                self.pool.release_connection(conn)
 
     def get_caja_banco(self, reference):
+        conn = None
+        cursor = None
         try:
-            conn = psycopg2.connect(**self.config)
+            # Get connection from pool
+            conn = self.pool.get_connection()
+            if not conn:
+                logging.error("Could not get database connection from pool")
+                return None
+                
             cursor = conn.cursor()
             
             query = """
@@ -378,17 +484,25 @@ class VelneoMappings:
             return result[0] if result else None
         
         except Exception as e:
-            logging.error(f"Error retrieving payment method Velneo ID: {e}")
+            logging.error(f"Error retrieving caja_banco Velneo ID: {e}")
             return None
         finally:
             if cursor:
                 cursor.close()
             if conn:
-                conn.close()
+                # Return connection to pool instead of closing
+                self.pool.release_connection(conn)
 
     def get_forma_pago(self, reference):
+        conn = None
+        cursor = None
         try:
-            conn = psycopg2.connect(**self.config)
+            # Get connection from pool
+            conn = self.pool.get_connection()
+            if not conn:
+                logging.error("Could not get database connection from pool")
+                return None
+                
             cursor = conn.cursor()
             
             query = """
@@ -403,13 +517,14 @@ class VelneoMappings:
             return result[0] if result else None
         
         except Exception as e:
-            logging.error(f"Error retrieving payment form Velneo ID: {e}")
+            logging.error(f"Error retrieving forma_pago Velneo ID: {e}")
             return None
         finally:
             if cursor:
                 cursor.close()
             if conn:
-                conn.close()
+                # Return connection to pool instead of closing
+                self.pool.release_connection(conn)
 
 
     
