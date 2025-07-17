@@ -339,7 +339,7 @@ class DataMap:
 
         result['plaza'] = self.apply_map_plaza()
 
-        result['f_pag'] = self.apply_map_caja_banco('ET') #TODO update this value
+        # result['fpg'] = self.apply_map_caja_banco(record['']) #TODO update this value
    
         return result
 

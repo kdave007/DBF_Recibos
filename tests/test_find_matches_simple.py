@@ -45,6 +45,10 @@ def main():
     # Check if script should be stopped based on .env flag
     load_dotenv()  # Load environment variables
     stop_script = os.getenv('STOP_SCRIPT', 'False').lower() == 'true'
+    logging.info(f" STOP_SCRIPT : {os.getenv('STOP_SCRIPT', 'False')} ")
+    logging.info(f" DEBUG_MODE : {os.getenv('DEBUG_MODE', 'False')} ")
+    logging.info(f" SQL_ENABLED : {os.getenv('SQL_ENABLED', 'False')} ")
+   
     
     if stop_script:
         message = "STOP_SCRIPT flag is set to True in .env - Exiting script early"
@@ -64,8 +68,10 @@ def main():
     # sys.exit(0)
     
     #Original code (won't be executed due to sys.exit above)
-    start_date = date(2025, 7, 3)  # year month day
-    end_date = date(2025, 7, 6)  # year month day
+    start_date = date(2025, 7, 6)  # year month day
+    end_date = date(2025, 7, 9)  # year month day
+
+    logging.info(f'start date : {start_date} to end_date {end_date}')
     
     process = WorkFlow()
 

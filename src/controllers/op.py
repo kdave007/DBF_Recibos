@@ -43,6 +43,9 @@ class OP:
         # Read API configuration from .env file
         base_url = os.getenv('API_BASE_URL', 'https://c8.velneo.com:17262/api/vLatamERP_db_dat/v2/_process/pro_vta_fac')
         api_key = os.getenv('API_KEY', '123456')
+        
+        # Check if SQL operations are enabled
+        sql_enabled = os.getenv('SQL_ENABLED', 'True').lower() == 'true'
         for record in records:
             print(f'RECORD FOUND {record}')
             print(f'------')
@@ -61,29 +64,32 @@ class OP:
                 
                 # Check if the first request was successful
                 if ca_req_result['success']:
-                    print(f"Successfully processed first request for folio: {record.get('folio')}")
+                    print(f"Successfully processed request for folio: {record.get('folio')}")
                     #insert in the db the posted CA record
-                    fac_result = self.api_track._create_op(ca_req_result['success'][0])
-                    logging.info(f"insertion sql headers success: {fac_result}")
-                    # Process partidas (details)
-                    details_result = self.api_track._details_completed(ca_req_result['success'][0])
-                    print(f"Details processing result: {details_result}")
-                    logging.info(f"insertion sql details success: {details_result}")
-                    
-                    # Process recibos (receipts)
-                    receipts_result = self.api_track._receipts_completed(ca_req_result['success'][0])
-                    print(f"Receipts processing result: {receipts_result}")
-                    logging.info(f"insertion sql receipts success: {receipts_result}")
+                    if sql_enabled :
+                        fac_result = self.api_track._create_op(ca_req_result['success'][0])
+                        logging.info(f"insertion sql headers success: {fac_result}")
+                        # Process partidas (details)
+                        details_result = self.api_track._details_completed(ca_req_result['success'][0])
+                        print(f"Details processing result: {details_result}")
+                        logging.info(f"insertion sql details success: {details_result}")
+                        
+                        # Process recibos (receipts)
+                        receipts_result = self.api_track._receipts_completed(ca_req_result['success'][0])
+                        print(f"Receipts processing result: {receipts_result}")
+                        logging.info(f"insertion sql receipts success: {receipts_result}")
 
 
                     #here insert in DB the PARTIDAS and RECIBOS 
                      #update if it is a record retry    
-                    self._retry_completed(record)
+                    if sql_enabled :
+                        self._retry_completed(record)
                 else:
                     print(f"Failed to process first request for folio: {record.get('folio')}")
-                    logging.error(f"Failed to process first request for folio: {record.get('folio')}")
+                    logging.error(f"Failed to process request for folio: {record.get('folio')}")
                     
-                    self.error.insert(f"Failed process folio: {record.get('folio')}, "+f"{ ca_req_result['failed'][0]['error_msg']}", self.class_name)
+                    if sql_enabled :
+                        self.error.insert(f"Failed process folio: {record.get('folio')}, "+f"{ ca_req_result['failed'][0]['error_msg']}", self.class_name)
 
                     if ca_req_result['failed']:
                         for failure in ca_req_result['failed']:
@@ -91,7 +97,8 @@ class OP:
                     # Skip to next record if first request failed
 
                     #update retry
-                    self._retry_tracker(record)
+                    if sql_enabled :
+                        self._retry_tracker(record)
 
                     continue
             

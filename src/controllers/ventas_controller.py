@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, date
+import logging
 from typing import Dict, Any, List
 import json
 import time
@@ -46,6 +47,9 @@ class VentasController:
         headers_time = time.time() - headers_start
 
         print(f"\nTime to get headers: {headers_time:.2f} seconds")
+
+       
+        
         
         # Get folios to filter details
         folios = [str(header['Folio']) for header in headers]
@@ -55,8 +59,13 @@ class VentasController:
         # Then get details only for these folios
         details_start = time.time()
 
+        logging.info(f'/// /// /// Total cabeceras found: {len(headers)}')
+
         details_by_folio = self._get_details_for_folios(folios) if folios else {}
         receipts_by_ref = self._get_receipts_for_folios(receipts_num, start_date, end_date) if receipts_num else {}
+        
+
+        
 
         details_time = time.time() - details_start
         print(f"Time to get filtered details: {details_time:.2f} seconds")
@@ -110,6 +119,8 @@ class VentasController:
         parse_start = time.time()
 
         raw_data = json.loads(raw_data_str)
+        logging.info(f'/// /// /// Total detalles found: {len(raw_data)}')
+        
         
         parse_time = time.time() - parse_start
         print(f"Time to parse PARTVTA JSON: {parse_time:.2f} seconds")
@@ -177,6 +188,8 @@ class VentasController:
         
         # Combine the data from both tables
         raw_data = raw_data_1 + raw_data_2
+
+        logging.info(f'/// /// /// Total recibos found: {len(raw_data)}')
         
         print(f"Records from {target_table}: {len(raw_data_1)}")
         print(f"Records from {target_table_2}: {len(raw_data_2)}")

@@ -48,11 +48,11 @@ class DBFReader:
                 use_or = len(filters) > 1 and all(f['field'] == filters[0]['field'] for f in filters)
                 
                 for f in filters:
-                    print(f' filter ////// {f}')
+                    # print(f' filter ////// {f}')
                     if f['operator'] == 'range':
                         filter_conditions.append(
-                            f"{f['field']} = '{f['from_value']}' OR "
-                            f"{f['field']} = '{f['to_value']}'"
+                            f"{f['field']} >= '{f['from_value']}' AND "
+                            f"{f['field']} <= '{f['to_value']}'"
                         )
                     else:
                         filter_conditions.append(
@@ -105,7 +105,7 @@ class DBFReader:
             JSON string representation of the records
         """
         records = self.read_table(table_name, limit, filters)
-        print(self.get_table_info(table_name))
+        #print(self.get_table_info(table_name))
 
         # print(f' records  {records}')
         

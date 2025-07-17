@@ -123,7 +123,21 @@ class SendRequest:
         
         # Add decorative logging for sending folio
         border = "=" * 80
-       
+
+        if len(dbf_record.get('recibos', [])) == 0 or len(dbf_record.get('partidas', [])) == 0 :
+            logging.warning(f"Declined send request for folio {folio} found with {len(dbf_record.get('partidas', []))} partidas and {len(dbf_record.get('recibos', []))} recibos")
+            results['failed'].append({
+                        'folio': folio,
+                        'fecha_emision': dbf_record.get('fecha'),
+                        'total_partidas': len(dbf_record.get('detalles', [])),
+                        'hash': "",
+                        'status': 500,
+                        'error_msg': "Skipped due to empty recibos or partidas"
+                    })
+            
+            return results
+            
+        
         logging.info(f"SENDING REQUEST FOR FOLIO: {folio}, det:{len(dbf_record.get('detalles', []))} , rec:{len(dbf_record.get('recibos', []))}")
        
         
@@ -263,7 +277,7 @@ class SendRequest:
                                 success_entry['partidas'].append(partida_data)
                         
                         # Process CO (RECIBOS COBRADOS) data with new structure
-                        if 'CO' in response_json and isinstance(response_json['CO'], dict):
+                        if 'CO' in response_json and isinstance(response_json['CO'], dict) and dbf_record.get('recibos', []):
                             co_data = response_json['CO']
                             
                             # Extract common IDs from CO object
@@ -280,7 +294,7 @@ class SendRequest:
                                 
                                 # Initialize receipt data with basic fields and all IDs
                                 receipt_data = {
-                                    'id': receipt_entry.get('ID_DTL_COB_APL_T'),
+                                    'id': receipt_entry.get('id_rbo_cob_t'),
                                     'id_cta_cor_t': id_cta_cor_t,
                                     'id_dtl_doc_cob_t': id_dtl_doc_cob_t,
                                     'id_rbo_cob_t': id_rbo_cob_t,
@@ -321,8 +335,8 @@ class SendRequest:
                         print(f"Successfully processed response for folio {folio_str}")
                         logging.info(f"Successfully processed response for folio {folio_str}")
                 except Exception as e:
-                    print(f"Error processing response for folio  aa {folio}: {(e)}")
-                    logging.info(f"Error processing response for folio  aa {folio}: {(e)}")
+                    print(f"Error processing response for folio   {folio}: {(e)}")
+                    logging.info(f"Error processing response for folio   {folio}: {(e)}")
                     # Add to failed results
                     results['failed'].append({
                         'folio': folio,
