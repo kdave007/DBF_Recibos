@@ -279,6 +279,7 @@ class SendRequest:
                         # Process CO (RECIBOS COBRADOS) data with new structure
                         if 'CO' in response_json and isinstance(response_json['CO'], dict) and dbf_record.get('recibos', []):
                             co_data = response_json['CO']
+                    
                             
                             # Extract common IDs from CO object
                             id_cta_cor_t = co_data.get('ID_CTA_COR_T')
@@ -294,7 +295,7 @@ class SendRequest:
                                 
                                 # Initialize receipt data with basic fields and all IDs
                                 receipt_data = {
-                                    'id': receipt_entry.get('id_rbo_cob_t'),
+                                    'id_dtl_cob_apl_t': receipt_entry.get('ID_DTL_COB_APL_T'),
                                     'id_cta_cor_t': id_cta_cor_t,
                                     'id_dtl_doc_cob_t': id_dtl_doc_cob_t,
                                     'id_rbo_cob_t': id_rbo_cob_t,
@@ -768,7 +769,8 @@ class SendRequest:
                         "tienda": record.get('tienda'),
                         "ref_tipo": record.get('ref_tipo'),
                         "hora": record.get('hora'),
-                        "num_doc": f'{record.get('plaza')}-{record.get('tienda')}-{record.get('ref_tipo')}-{record.get('ref_recibo')}'
+                        "num_doc": f'{record.get('plaza')}-{record.get('tienda')}-{record.get('ref_tipo')}-{record.get('ref_recibo')}',
+                        "fpg": record.get('fpg')
                     }
             print(record)        
             array_payload.append(single_payload)

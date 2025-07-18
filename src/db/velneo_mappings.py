@@ -526,5 +526,43 @@ class VelneoMappings:
                 # Return connection to pool instead of closing
                 self.pool.release_connection(conn)
 
+    def get_forma_pago_caja_banco(self, reference):
+        conn = None
+        cursor = None
+        try:
+            # Get connection from pool
+            conn = self.pool.get_connection()
+            if not conn:
+                logging.error("Could not get database connection from pool")
+                return None
+                
+            cursor = conn.cursor()
+            
+            # Single query with a fallback to default_value if no match found
+            query = """
+            SELECT forma_pago FROM forma_pago_caja_banco 
+            WHERE caja_banco = %s
+            UNION ALL
+            SELECT forma_pago FROM forma_pago_caja_banco 
+            WHERE caja_banco = 'default_value'
+            LIMIT 1
+            """
+            
+            cursor.execute(query, (reference,))
+            result = cursor.fetchone()
+            
+            return result[0] if result else None
+        
+        except Exception as e:
+            logging.error(f"Error retrieving forma_pago Velneo ID: {e}")
+            return None
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                # Return connection to pool instead of closing
+                self.pool.release_connection(conn)
+
+
 
     

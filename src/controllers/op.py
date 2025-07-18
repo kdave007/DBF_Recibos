@@ -27,8 +27,9 @@ class OP:
         self.bypass_ca = False
 
         if "create" in operations:
-            self._create(operations['create'])
+            ops = self._create(operations['create'])
             logging.info(f"request to upload data finished")
+            
 
         if "update" in operations:
             pass
@@ -43,6 +44,9 @@ class OP:
         # Read API configuration from .env file
         base_url = os.getenv('API_BASE_URL', 'https://c8.velneo.com:17262/api/vLatamERP_db_dat/v2/_process/pro_vta_fac')
         api_key = os.getenv('API_KEY', '123456')
+
+        total_successfull_op = 0
+        total_failed_op = 0
         
         # Check if SQL operations are enabled
         sql_enabled = os.getenv('SQL_ENABLED', 'True').lower() == 'true'
@@ -64,6 +68,7 @@ class OP:
                 
                 # Check if the first request was successful
                 if ca_req_result['success']:
+                    total_successfull_op += 1
                     print(f"Successfully processed request for folio: {record.get('folio')}")
                     #insert in the db the posted CA record
                     if sql_enabled :
@@ -87,6 +92,7 @@ class OP:
                 else:
                     print(f"Failed to process first request for folio: {record.get('folio')}")
                     logging.error(f"Failed to process request for folio: {record.get('folio')}")
+                    total_failed_op += 1
                     
                     if sql_enabled :
                         self.error.insert(f"Failed process folio: {record.get('folio')}, "+f"{ ca_req_result['failed'][0]['error_msg']}", self.class_name)
@@ -101,6 +107,8 @@ class OP:
                         self._retry_tracker(record)
 
                     continue
+        logging.info(f"//***// Total create successfull op {total_successfull_op}, total failed op {total_failed_op} //***//")
+        return {total_successfull_op, total_failed_op}
             
             # if first_request_success:
 

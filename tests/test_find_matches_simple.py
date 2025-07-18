@@ -49,6 +49,20 @@ def main():
     logging.info(f" DEBUG_MODE : {os.getenv('DEBUG_MODE', 'False')} ")
     logging.info(f" SQL_ENABLED : {os.getenv('SQL_ENABLED', 'False')} ")
    
+    #internet validation
+
+    # Check internet connection if required by environment variable
+    internet_check = os.getenv('INTERNET_CHECK', 'True').lower() == 'true'
+    if internet_check:
+        from src.utils.network_utils import check_internet_connection
+        internet_available, error_message = check_internet_connection()
+        if not internet_available:
+            message = f"Internet connection check failed: {error_message}m ending the process"
+            print(message)
+            logging.error(message)
+            sys.exit(1)
+        else:
+            print("Internet connection verified successfully")
     
     if stop_script:
         message = "STOP_SCRIPT flag is set to True in .env - Exiting script early"
@@ -68,8 +82,8 @@ def main():
     # sys.exit(0)
     
     #Original code (won't be executed due to sys.exit above)
-    # start_date = date(2025, 7, 6)  # year month day
-    # end_date = date(2025, 7, 9)  # year month day
+    # start_date = date(2025, 7, 1)  # year month day
+    # end_date = date(2025, 7, 2)  # year month day
 
     logging.info(f'start date : {start_date} to end_date {end_date}')
     
