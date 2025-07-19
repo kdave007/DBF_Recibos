@@ -9,8 +9,15 @@ def setup_logging(log_level=logging.INFO):
     Args:
         log_level: The logging level (default: logging.INFO)
     """
+    # Load environment variables if not already loaded
+    from dotenv import load_dotenv
+    load_dotenv()
+    
+    # Get log directory from environment variable or use default
+    default_logs_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'logs')
+    logs_dir = os.getenv('LOG_PATH', default_logs_dir)
+    
     # Create logs directory if it doesn't exist
-    logs_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'logs')
     os.makedirs(logs_dir, exist_ok=True)
     
     # Generate log filename with date only (one file per day)
