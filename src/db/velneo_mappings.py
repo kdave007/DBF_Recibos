@@ -537,7 +537,7 @@ class VelneoMappings:
                 return None
                 
             cursor = conn.cursor()
-            
+           
             # Single query with a fallback to default_value if no match found
             query = """
             SELECT forma_pago FROM forma_pago_caja_banco 

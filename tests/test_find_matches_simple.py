@@ -17,7 +17,7 @@ log_file = setup_logging()
 # Use logging instead of print for the decorative message
 border = "*" * 80
 spacing = "*" + " " * 78 + "*"
-message = "*" + " " * 25 + "STARTING SCRIPT EXECUTION" + " " * 25 + "*"
+message = "*" + " " * 25 + "STARTING SCRIPT EXECUTION v 1.2" + " " * 25 + "*"
 
 logging.info(border)
 logging.info(spacing)

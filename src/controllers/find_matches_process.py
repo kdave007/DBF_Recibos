@@ -54,6 +54,7 @@ class MatchesProcess:
         print("\n=== Starting db_map_implementations ===")
         db_map_start_time = time.time()
         dbf_results = self.db_map_implementations(dbf_results)
+      
         db_map_end_time = time.time()
         db_map_time = db_map_end_time - db_map_start_time
         print(f"\n=== db_map_implementations completed in {db_map_time:.2f} seconds ===")

@@ -3,6 +3,7 @@
 
 from typing import Dict, Any, Optional
 import logging
+import sys
 from src.db.velneo_mappings import VelneoMappings
 from src.config.db_config import PostgresConnection
 
