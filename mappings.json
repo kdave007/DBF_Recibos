@@ -154,6 +154,11 @@
                 "dbf": "IVAXPART",
                 "velneo_table": "iva_part" ,
                 "type": "string"
+            },
+            "NPRECILIS":{
+                "dbf": "NPRECILIS",
+                "velneo_table": "n_precio_lis" ,
+                "type": "string"
             }
         }
     },

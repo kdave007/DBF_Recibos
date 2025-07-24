@@ -207,7 +207,7 @@ class SendRequest:
             
             # Process the response
 
-            
+         
 
             if response.status_code in [200, 201, 202, 204]:
                 try:
@@ -743,7 +743,8 @@ class SendRequest:
                         "emp": str(record.get('emp')),
                         "fch": self._format_date_to_iso(parent_ref.get("fecha")),
                         "hor":self._format_hour_to_12h(record.get('hor')),
-                        "pre": float(record.get('imp_part', 0)) ,
+                        # "pre": float(record.get('precio', 0)) ,
+                        "pre": float(record.get('n_precio_lis', 0)) ,
                         # "pre": float(record.get('imp_part', 0)) + float(record.get('iva_part', 0)),
                         "por_dto": record.get('descuento'),
                         "reg_iva_vta":record.get('reg_iva_vta'),

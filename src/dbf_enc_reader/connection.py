@@ -34,6 +34,7 @@ class DBFConnection:
             data_source: Path to the DBF file
             encryption_password: Password for encrypted DBF
         """
+        #TODO validate the encryption password needed with an env. flag ------------------------------
         self.data_source = str(Path(data_source).resolve())
         self.connection_string = (
             f"data source={self.data_source}; "
