@@ -744,7 +744,7 @@ class SendRequest:
                         "fch": self._format_date_to_iso(parent_ref.get("fecha")),
                         "hor":self._format_hour_to_12h(record.get('hor')),
                         # "pre": float(record.get('precio', 0)) ,
-                        "pre": float(record.get('n_precio_lis', 0)) ,
+                        "pre": float(record.get('precio', 0)) + float(record.get('n_descto_1', 0)) + float(record.get('n_descto_2', 0)) ,
                         # "pre": float(record.get('imp_part', 0)) + float(record.get('iva_part', 0)),
                         "por_dto": record.get('descuento'),
                         "reg_iva_vta":record.get('reg_iva_vta'),

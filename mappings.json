@@ -159,6 +159,16 @@
                 "dbf": "NPRECILIS",
                 "velneo_table": "n_precio_lis" ,
                 "type": "string"
+            },
+            "NDESCTO1":{
+                "dbf": "NDESCTO1",
+                "velneo_table": "n_descto_1" ,
+                "type": "number"
+            },
+            "NDESCTO2":{
+                "dbf": "NDESCTO2",
+                "velneo_table": "n_descto_2" ,
+                "type": "number"
             }
         }
     },

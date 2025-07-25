@@ -1,4 +1,5 @@
 import clr
+import os
 from pathlib import Path
 from typing import Optional
 
@@ -34,15 +35,24 @@ class DBFConnection:
             data_source: Path to the DBF file
             encryption_password: Password for encrypted DBF
         """
-        #TODO validate the encryption password needed with an env. flag ------------------------------
         self.data_source = str(Path(data_source).resolve())
-        self.connection_string = (
-            f"data source={self.data_source}; "
-            "ServerType=LOCAL; "
-            "TableType=CDX; "
+        
+        # Check if encryption is enabled via environment variable
+        encrypted = os.getenv('ENCRYPTED', 'True').lower() == 'true'
+        
+        # Build connection string with or without encryption password based on ENCRYPTED flag
+        connection_parts = [
+            f"data source={self.data_source}; ",
+            "ServerType=LOCAL; ",
+            "TableType=CDX; ",
             "Shared=TRUE; "
-            f"EncryptionPassword={encryption_password};"
-        )
+        ]
+        
+        # Only add encryption password if ENCRYPTED flag is True
+        if encrypted:
+            connection_parts.append(f"EncryptionPassword={encryption_password};")
+            
+        self.connection_string = "".join(connection_parts)
         print(f"Debug - Connection string: {self.connection_string}")
         self.conn: Optional[AdsConnection] = None
         self.reader = None
