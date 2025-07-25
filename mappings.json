@@ -94,7 +94,7 @@
             "MODHORA":{
                     "dbf": "MODHORA",
                     "velneo_table": "hor" ,
-                    "type": "number"
+                    "type": "string"
             },
             "CCON_CXC":{
                     "dbf": "CCON_CXC",
