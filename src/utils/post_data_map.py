@@ -24,14 +24,14 @@ class DataMap:
         self.db_config = db_config or PostgresConnection.get_db_config()
         self.velneo_mappings = VelneoMappings(self.db_config)
     
-    def apply_map_serie(self) -> Optional[int]:
+    def apply_map_serie(self, ref) -> Optional[int]:
         """Get the Velneo ID for serie from the database
         
         Returns:
             int: The mapped Velneo ID or None if not found
         """
         try:
-            return self.velneo_mappings.get_from_general_serie()
+            return self.velneo_mappings.get_from_general_serie(ref)
         except Exception as e:
             logging.error(f"Error mapping serie: {e}")
             return None
@@ -102,19 +102,19 @@ class DataMap:
             logging.error(f"Error mapping pais with ref {ref}: {e}")
             return None
 
-    def apply_map_alm(self) -> Optional[int]:
+    def apply_map_alm(self, ref) -> Optional[int]:
         """Get the Velneo ID for almacen from the database
         
         Returns:
             int: The mapped Velneo ID or None if not found
         """
         try:
-            return self.velneo_mappings.get_from_general_alm()
+            return self.velneo_mappings.get_from_general_alm(ref)
         except Exception as e:
             logging.error(f"Error mapping almacen: {e}")
             return None
 
-    def apply_map_emp(self) -> Optional[int]:
+    def apply_map_emp(self, ref) -> Optional[int]:
         """Get the Velneo ID for empresa from the database
         
         Args:
@@ -125,12 +125,12 @@ class DataMap:
         """
         try:
             # Note: ref parameter is kept for consistency but not used in the current implementation
-            return self.velneo_mappings.get_from_general_emp()
+            return self.velneo_mappings.get_from_general_emp(ref)
         except Exception as e:
             logging.error(f"Error mapping empresa: {e}")
             return None
 
-    def apply_map_div(self) -> Optional[int]:
+    def apply_map_div(self, ref) -> Optional[int]:
         """Get the Velneo ID for division from the database
         
         Args:
@@ -141,7 +141,7 @@ class DataMap:
         """
         try:
             # Note: ref parameter is kept for consistency but not used in the current implementation
-            return self.velneo_mappings.get_from_general_div()
+            return self.velneo_mappings.get_from_general_div(ref)
         except Exception as e:
             logging.error(f"Error mapping division: {e}")
             return None
@@ -200,7 +200,7 @@ class DataMap:
             logging.error(f"Error mapping articulo with ref {ref}: {e}")
             return None
 
-    def apply_map_plaza(self) -> Optional[int]:
+    def apply_map_plaza(self, ref) -> Optional[int]:
         """Get the Velneo ID for empresa from the database
         
         Args:
@@ -211,7 +211,7 @@ class DataMap:
         """
         try:
             # Note: ref parameter is kept for consistency but not used in the current implementation
-            return self.velneo_mappings.get_from_general_plaza()
+            return self.velneo_mappings.get_from_general_plaza(ref)
         except Exception as e:
             logging.error(f"Error mapping empresa: {e}")
             return None
@@ -272,7 +272,7 @@ class DataMap:
     
     
     
-    def process_record_fac(self, record: Dict[str, Any]) -> Dict[str, Any]:
+    def process_record_fac(self, record: Dict[str, Any], store) -> Dict[str, Any]:
         """Process a complete record by applying all relevant mappings
         
         Args:
@@ -285,7 +285,7 @@ class DataMap:
         # print(f' MAP FAC BEFORE {record}')
         # Apply mappings based on available fields in the record
 
-        result['ser'] = self.apply_map_serie()
+        result['ser'] = self.apply_map_serie(store)
             
         result['clt'] = self.apply_map_cliente()
             
@@ -295,17 +295,17 @@ class DataMap:
             
         result['pai'] = self.apply_map_pais('México')
 
-        result['emp_div'] = self.apply_map_div()
+        result['emp_div'] = self.apply_map_div(store)
 
-        result['emp'] = self.apply_map_emp()
+        result['emp'] = self.apply_map_emp(store)
 
-        result['alm'] = self.apply_map_alm()
+        result['alm'] = self.apply_map_alm(store)
 
         # print(f' MAP FAC AFTER {result}')
       
         return result
 
-    def process_record_det(self, record: Dict[str, Any]) -> Dict[str, Any]:
+    def process_record_det(self, record: Dict[str, Any], store) -> Dict[str, Any]:
         """Process a complete record by applying all relevant mappings
         
         Args:
@@ -318,16 +318,16 @@ class DataMap:
         # print(f' MAP DETAIL BEFORE {record}')
         
         # Apply mappings based on available fields in the record
-        result['alm'] = self.apply_map_alm()
+        result['alm'] = self.apply_map_alm(store)
 
-        result['emp_div'] = self.apply_map_div()
+        result['emp_div'] = self.apply_map_div(store)
 
-        result['emp'] = self.apply_map_emp()
+        result['emp'] = self.apply_map_emp(store)
 
         result['art'] = self.apply_map_articulo(record['REF'])
      
             
-        result['ser_vta'] = self.apply_map_serie()
+        result['ser_vta'] = self.apply_map_serie(store)
      
         #result['mov_tip'] = self.apply_map_tipo_mov(record['tipo_mov'])
         result['mov_tip'] = 'V'
@@ -341,7 +341,7 @@ class DataMap:
         return result
     
 
-    def process_record_rec(self, record: Dict[str, Any]) -> Dict[str, Any]:
+    def process_record_rec(self, record: Dict[str, Any], store) -> Dict[str, Any]:
         """Process a complete record by applying all relevant mappings
         
         Args:
@@ -357,7 +357,7 @@ class DataMap:
         
         result['caja_bco'] = self.apply_map_caja_banco(record['caja_bco'])
 
-        result['plaza'] = self.apply_map_plaza()
+        result['plaza'] = self.apply_map_plaza(store)
 
         result['fpg'] = self.apply_map_forma_pago_caja_banco(record['caja_bco'])
 

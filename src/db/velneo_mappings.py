@@ -50,11 +50,11 @@ class VelneoMappings:
                 # Return connection to pool instead of closing
                 self.pool.release_connection(conn)
 
-    def get_from_general_alm(self):
+    def get_from_general_alm(self, store):
         """Get the Velneo ID for an almacen (warehouse) from general_misc table
         
         Args:
-            reference: The reference to look for (id_psi)
+            store: The store identifier to look for
             
         Returns:
             int: The Velneo ID (id_velneo) if found, None otherwise
@@ -72,10 +72,10 @@ class VelneoMappings:
             
             query = """
             SELECT id_velneo FROM general_misc 
-            WHERE title = 'almacen'
+            WHERE title = 'almacen' AND tienda = %s
             """
             
-            cursor.execute(query)
+            cursor.execute(query, (store,))
             result = cursor.fetchone()
             
             return result[0] if result else None
@@ -90,7 +90,7 @@ class VelneoMappings:
                 # Return connection to pool instead of closing
                 self.pool.release_connection(conn)
 
-    def get_from_general_serie(self):
+    def get_from_general_serie(self, store):
         """Get the Velneo ID for a serie from general_misc table
         
         Args:
@@ -112,10 +112,10 @@ class VelneoMappings:
             
             query = """
             SELECT id_velneo FROM general_misc 
-            WHERE title = 'serie'
+            WHERE title = 'serie' AND tienda = %s
             """
             
-            cursor.execute(query)
+            cursor.execute(query, (store,))
             result = cursor.fetchone()
             
             return result[0] if result else None
@@ -130,7 +130,7 @@ class VelneoMappings:
                 # Return connection to pool instead of closing
                 self.pool.release_connection(conn)
 
-    def get_from_general_emp(self):
+    def get_from_general_emp(self, store):
         """Get the Velneo ID for an empresa (company) from general_misc table
         
         Args:
@@ -152,10 +152,10 @@ class VelneoMappings:
             
             query = """
             SELECT id_velneo FROM general_misc 
-            WHERE title = 'empresa'
+            WHERE title = 'empresa' AND tienda = %s
             """
             
-            cursor.execute(query)
+            cursor.execute(query, (store,))
             result = cursor.fetchone()
             
             return result[0] if result else None
@@ -170,7 +170,7 @@ class VelneoMappings:
                 # Return connection to pool instead of closing
                 self.pool.release_connection(conn)
     
-    def get_from_general_div(self):
+    def get_from_general_div(self, store):
         """Get the Velneo ID for an division (company) from general_misc table
         
         Args:
@@ -192,10 +192,10 @@ class VelneoMappings:
             
             query = """
             SELECT id_velneo FROM general_misc 
-            WHERE title = 'division'
+            WHERE title = 'division' AND tienda = %s
             """
             
-            cursor.execute(query)
+            cursor.execute(query, (store,))
             result = cursor.fetchone()
             
             return result[0] if result else None
@@ -420,7 +420,7 @@ class VelneoMappings:
                 # Return connection to pool instead of closing
                 self.pool.release_connection(conn)
 
-    def get_from_general_plaza(self):
+    def get_from_general_plaza(self, store):
         """Get the Velneo ID for an plaza (company) from general_misc table
         
         Args:
@@ -442,10 +442,10 @@ class VelneoMappings:
             
             query = """
             SELECT id_velneo FROM general_misc 
-            WHERE title = 'plaza'
+            WHERE title = 'plaza' AND tienda = %s
             """
             
-            cursor.execute(query)
+            cursor.execute(query, (store,))
             result = cursor.fetchone()
             
             return result[0] if result else None

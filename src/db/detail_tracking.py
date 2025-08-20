@@ -246,7 +246,7 @@ class DetailTracking:
                         
                     except Exception as e:
                         # If anything goes wrong, rollback this ID's transaction
-                        conn.rollback()
+                        conn.rollback()#TODO:comment this line <------------------------------------------------------------------
                         logging.error(f"Error processing ID {detail_id}: {e}")
                         # Continue with the next ID
                         
