@@ -33,6 +33,7 @@ class ReceiptTracking:
                     ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP)
                 """
                 print(f'RECEIPTS TO PROCESS: {receipts}')
+                
                 # Process each receipt
                 with conn.cursor() as cursor:
                     for receipt in receipts:
@@ -65,6 +66,8 @@ class ReceiptTracking:
                         # Get hash and estado (default values if not provided)
                         hash_value = receipt.get('hash', '')
                         estado = receipt.get('estado', 'PROCESADO')
+
+                        logging.info(f"Inserting record: folio={folio}, num_ref={num_ref}, dtl_cob_apl_t={dtl_cob_apl_t}")
                         
                         try:
                             # Insert the record
@@ -73,10 +76,10 @@ class ReceiptTracking:
                                 hash_value, estado, fecha_emision
                             ))
                             inserted_count += 1
-                            print(f"Inserted record: folio={folio}, num_ref={num_ref}, dtl_cob_apl_t={dtl_cob_apl_t}")
+                            
                         except Exception as e:
-                            print(f"Error inserting record: {e}")
-                            logging.error(f"Error inserting record: {e}")
+                            print(f"RECEIPTS Error inserting record: {e}")
+                            logging.error(f" RECEIPTS :: Error inserting record: {e}")
                             # Continue with next record
                 
                 # Commit all changes
@@ -85,6 +88,6 @@ class ReceiptTracking:
                 return inserted_count > 0
                 
         except Exception as e:
-            logging.error(f"Error in batch_replace_by_id: {e}")
+            logging.error(f" RECEIPTS :: Error in batch_replace_by_id: {e}")
             print(f"Database connection error: {e}")
             return False

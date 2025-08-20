@@ -52,7 +52,7 @@ class ResponseSimulator:
                 "_indice": i
             }
             response["PA"].append(pa_entry)
-            #response["PA"].append(pa_entry)#
+            # response["PA"].append(pa_entry)#
         
         # Generate ID_DTL_COB_APL_T entries based on receipts in the record
         receipts = dbf_record.get('recibos', [])

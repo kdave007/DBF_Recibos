@@ -76,9 +76,12 @@ class OP:
                         logging.info(f"insertion sql headers success: {fac_result}")
                         # Process partidas (details)
                         details_result = self.api_track._details_completed(ca_req_result['success'][0])
-                        print(f"Details processing result: {details_result}")
-                        logging.info(f"insertion sql details success: {details_result}")
-                        
+                        logging.info(f"Details processing result: {details_result}")
+
+                        if details_result == 0:
+                            logging.info(f"insertion sql details success: {details_result}")
+                            logging.info(f"When error happened, json : {ca_req_result['success'][0].get('json_resp')}")
+
                         # Process recibos (receipts)
                         receipts_result = self.api_track._receipts_completed(ca_req_result['success'][0])
                         print(f"Receipts processing result: {receipts_result}")
@@ -93,10 +96,16 @@ class OP:
                     print(f"Failed to process first request for folio: {record.get('folio')}")
                     logging.error(f"Failed to process request for folio: {record.get('folio')}")
                     total_failed_op += 1
+
+                    if ca_req_result.get('failed') and len(ca_req_result['failed']) > 0:
+                        # Use double quotes for outer string and ensure safe access to json_resp
+                        logging.info(f"Response when error happened {ca_req_result['failed'][0].get('json_resp', 'No JSON response available')}")
                     
                     if sql_enabled :
-                        self.error.insert(f"Failed process folio: {record.get('folio')}, "+f"{ ca_req_result['failed'][0]['error_msg']}", self.class_name)
-
+                        if ca_req_result.get('failed') and len(ca_req_result['failed']) > 0 and ca_req_result['failed'][0].get('error_msg'):
+                            self.error.insert(f"Failed process folio: {record.get('folio')}, "+f"{ ca_req_result['failed'][0]['error_msg']}", self.class_name)
+                        
+               
                     if ca_req_result['failed']:
                         for failure in ca_req_result['failed']:
                             print(f"Failure reason: {failure.get('error_msg')}")

@@ -234,8 +234,9 @@ class DetailTracking:
                                 )
                                 
                                 # Debug print
-                                print(f'REPLACE: ID={detail_id}, FOLIO={folio}, HASH={detail_hash}, '
-                                      f'FECHA={fecha}, ESTADO={estado}, ACCION={operation}, REF={ref_value}')
+                                # logging.warning(f'////// /////// //////CHECKING FOR BUG DUPLICATE ID...')
+                                logging.info(f'detail_tracking :: INSERT REPLACE: ID={detail_id}, FOLIO={folio}, HASH={detail_hash}, '
+                                       f'FECHA={fecha}, ESTADO={estado}, ACCION={operation}, REF={ref_value}')
                                 
                                 cursor.execute(insert_query, params)
                                 inserted_count += 1
@@ -248,12 +249,13 @@ class DetailTracking:
                         # If anything goes wrong, rollback this ID's transaction
                         conn.rollback()#TODO:comment this line <------------------------------------------------------------------
                         logging.error(f"Error processing ID {detail_id}: {e}")
+                        inserted_count = 0
                         # Continue with the next ID
                         
                 return inserted_count > 0
                 
         except Exception as e:
-            logging.error(f"Error in batch_replace_by_id: {e}")
+            logging.error(f"DETAILS :: Error in batch_replace_by_id: {e}")
             return False
     
     def batch_insert_details(self, details: List[Dict]) -> bool:
@@ -367,7 +369,8 @@ class DetailTracking:
                             success_count += 1
                         except Exception as e:
                             # Log the error but continue with other records
-                            logging.error(f"Error inserting record {composite_id}: {e}")
+                            success_count = 0
+                            logging.error(f"DETAILS :: Error inserting record {composite_id}: {e}")
                             conn.rollback()
                             continue
                     
@@ -375,7 +378,7 @@ class DetailTracking:
                     return success_count > 0
                     
         except Exception as e:
-            logging.error(f"Error al insertar detalles en lote: {e}")
+            logging.error(f"DETAILS :: Error al insertar detalles en lote: {e}")
             return False
 
 
