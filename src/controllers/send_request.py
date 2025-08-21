@@ -137,11 +137,23 @@ class SendRequest:
                 response = ResponseSimulator.create_mock_response(status_code, response_json)
             else:
                 # Make actual API request
-                response = requests.post(
-                    f"{base_url}?api_key={api_key}", 
-                    headers=headers,
-                    data=post_data
-                )
+                try:
+                    response = requests.post(
+                        f"{base_url}?api_key={api_key}", 
+                        headers=headers,
+                        data=post_data,
+                        timeout=60  # Set timeout to 60 seconds
+                    )
+                except requests.exceptions.Timeout:
+                    error_msg = f"Request timed out after 60 seconds for folio {folio}"
+                    logging.error(error_msg)
+                    print(error_msg)
+                    raise TimeoutError(error_msg)
+                except requests.exceptions.ConnectionError as e:
+                    error_msg = f"Connection error for folio {folio}: {str(e)}"
+                    logging.error(error_msg)
+                    print(error_msg)
+                    raise ConnectionError(error_msg)
             
             print(f"Response Status Code for folio {folio}: {response.status_code}")
             print(f"Response Headers for folio {folio}: {response.headers}")

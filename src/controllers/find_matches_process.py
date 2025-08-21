@@ -247,7 +247,7 @@ class MatchesProcess:
                         'md5_hash': record.get('md5_hash')
                     }
                     
-                    store = "ROTON"
+                    store = os.environ.get("CLAVE_SUCURSAL", "ROTON")  # Get from environment variable with fallback
 
                     # Get mapped fields for the header
                     header_start_time = time.time()

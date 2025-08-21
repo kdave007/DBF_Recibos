@@ -99,7 +99,7 @@ class OP:
 
                     if ca_req_result.get('failed') and len(ca_req_result['failed']) > 0:
                         # Use double quotes for outer string and ensure safe access to json_resp
-                        logging.info(f"Response when error happened {ca_req_result['failed'][0].get('json_resp', 'No JSON response available')}")
+                        logging.info(f"Response when error happened :: {ca_req_result['failed'][0].get('json_resp', 'No JSON response available')}")
                     
                     if sql_enabled :
                         if ca_req_result.get('failed') and len(ca_req_result['failed']) > 0 and ca_req_result['failed'][0].get('error_msg'):
