@@ -248,10 +248,11 @@ class MatchesProcess:
                     }
                     
                     store = os.environ.get("CLAVE_SUCURSAL", "ROTON")  # Get from environment variable with fallback
+                    plaza = os.environ.get("CLAVE_PLAZA", "XALAP")  # Get from environment variable with fallback
 
                     # Get mapped fields for the header
                     header_start_time = time.time()
-                    header_mapped = data_mapper.process_record_fac(header_data,store)
+                    header_mapped = data_mapper.process_record_fac(header_data,store,plaza)
                     header_end_time = time.time()
                     header_time = header_end_time - header_start_time
                     total_header_time += header_time
@@ -281,7 +282,7 @@ class MatchesProcess:
                             
                             # Get mapped fields for the detail
                             detail_start_time = time.time()
-                            detail_mapped = data_mapper.process_record_det(detail_with_refs,store)
+                            detail_mapped = data_mapper.process_record_det(detail_with_refs,store, plaza)
                             detail_end_time = time.time()
                             detail_time = detail_end_time - detail_start_time
                             total_detail_time += detail_time
@@ -298,7 +299,7 @@ class MatchesProcess:
                             
                              # Get mapped fields for the receipt
                             receipt_start_time = time.time()
-                            recepit_mapped = data_mapper.process_record_rec(receipt_with_refs,store)
+                            recepit_mapped = data_mapper.process_record_rec(receipt_with_refs,store, plaza)
                             receipt_end_time = time.time()
                             receipt_time = receipt_end_time - receipt_start_time
                             total_receipt_time += receipt_time

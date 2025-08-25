@@ -102,14 +102,14 @@ class DataMap:
             logging.error(f"Error mapping pais with ref {ref}: {e}")
             return None
 
-    def apply_map_alm(self, ref) -> Optional[int]:
+    def apply_map_alm(self, store, plaza) -> Optional[int]:
         """Get the Velneo ID for almacen from the database
         
         Returns:
             int: The mapped Velneo ID or None if not found
         """
         try:
-            return self.velneo_mappings.get_from_general_alm(ref)
+            return self.velneo_mappings.get_from_general_alm(store, plaza)
         except Exception as e:
             logging.error(f"Error mapping almacen: {e}")
             return None
@@ -272,7 +272,7 @@ class DataMap:
     
     
     
-    def process_record_fac(self, record: Dict[str, Any], store) -> Dict[str, Any]:
+    def process_record_fac(self, record: Dict[str, Any], store, plaza) -> Dict[str, Any]:
         """Process a complete record by applying all relevant mappings
         
         Args:
@@ -299,13 +299,13 @@ class DataMap:
 
         result['emp'] = self.apply_map_emp(store)
 
-        result['alm'] = self.apply_map_alm(store)
+        result['alm'] = self.apply_map_alm(store, plaza)
 
         # print(f' MAP FAC AFTER {result}')
       
         return result
 
-    def process_record_det(self, record: Dict[str, Any], store) -> Dict[str, Any]:
+    def process_record_det(self, record: Dict[str, Any], store, plaza) -> Dict[str, Any]:
         """Process a complete record by applying all relevant mappings
         
         Args:
@@ -318,7 +318,7 @@ class DataMap:
         # print(f' MAP DETAIL BEFORE {record}')
         
         # Apply mappings based on available fields in the record
-        result['alm'] = self.apply_map_alm(store)
+        result['alm'] = self.apply_map_alm(store, plaza)
 
         result['emp_div'] = self.apply_map_div(store)
 
@@ -341,7 +341,7 @@ class DataMap:
         return result
     
 
-    def process_record_rec(self, record: Dict[str, Any], store) -> Dict[str, Any]:
+    def process_record_rec(self, record: Dict[str, Any], store, plaza) -> Dict[str, Any]:
         """Process a complete record by applying all relevant mappings
         
         Args:
