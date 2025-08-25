@@ -76,7 +76,7 @@ class OP:
                         logging.info(f"insertion sql headers success: {fac_result}")
                         # Process partidas (details)
                         details_result = self.api_track._details_completed(ca_req_result['success'][0])
-                        logging.info(f"Details processing result: {details_result}")
+                        logging.info(f"insertion sql details succes: {details_result}")
 
                         if details_result == 0:
                             logging.info(f"insertion sql details success: {details_result}")
