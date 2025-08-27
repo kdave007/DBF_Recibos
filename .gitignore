@@ -86,3 +86,8 @@ Advantage.Data.Provider.dll
 
 art_m.py
 art_m.json
+
+# Environment files
+.env.enc
+.env.key
+*.env

@@ -23,6 +23,7 @@ class MatchesProcess:
 
     def __init__(self) -> None:
         # Get database configuration
+        
         self.db_config = PostgresConnection.get_db_config()
         
         # Initialize the comparator and insertion processor
@@ -30,6 +31,8 @@ class MatchesProcess:
         self.insertion_processor = InsertionProcess(self.db_config)
 
         self.retry_tracker = RetriesTracking(self.db_config)
+
+        
 
     def compare_data(self, config, start_date, end_date):
         
@@ -40,7 +43,6 @@ class MatchesProcess:
         # Let's use exactly that date for our test
         # Note: The date in the DBF is in DD/MM/YYYY format
             
-        
         # Print the exact format we're looking for to help debug
         print(f"Looking for records with date exactly matching: {start_date} - {end_date}")
         

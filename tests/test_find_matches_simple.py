@@ -41,15 +41,24 @@ def main():
        # Let's try with the exact date from your screenshot: 20/03/2025
     # start_date = date(2025, 5, 5)  # year month day
     # end_date = date(2025, 5, 5)  # year month day
-
-    # Check if script should be stopped based on .env flag
-    load_dotenv()  # Load environment variables
-    stop_script = os.getenv('STOP_SCRIPT', 'False').lower() == 'true'
-    logging.info(f" STOP_SCRIPT : {os.getenv('STOP_SCRIPT', 'False')} ")
-    logging.info(f" DEBUG_MODE : {os.getenv('DEBUG_MODE', 'False')} ")
-    logging.info(f" SQL_ENABLED : {os.getenv('SQL_ENABLED', 'False')} ")
-
-    store = os.environ.get("CLAVE_SUCURSAL")
+    
+    # Check if script should be stopped based on encrypted .env flag
+    from src.utils.get_enc import EncEnv
+    env = EncEnv()
+    env_vars = env.fetch()
+    
+    stop_script = env.get('STOP_SCRIPT', 'False') == 'True'
+    logging.info(f" STOP_SCRIPT : {env.get('STOP_SCRIPT', 'False')} ")
+    logging.info(f" DEBUG_MODE : {env.get('DEBUG_MODE', 'False')} ")
+    logging.info(f" SQL_ENABLED : {env.get('SQL_ENABLED', 'False')} ")
+    
+    # # Print all environment variables for debugging
+    # logging.info("All environment variables from encrypted file:")
+    # for key, value in env_vars.items():
+    #     logging.info(f"  {key}: {value}")
+        
+  
+    store = env.get("CLAVE_SUCURSAL")
     if not store:
         logging.error("CLAVE_SUCURSAL environment variable is not set. Stopping script.")
         print("ERROR: CLAVE_SUCURSAL environment variable is not set. Stopping script.")
@@ -57,10 +66,12 @@ def main():
 
     logging.info(f"CLAVE_SUCURSAL : {store}.")
 
+
+
     #internet validation
 
     # Check internet connection if required by environment variable
-    internet_check = os.getenv('INTERNET_CHECK', 'True').lower() == 'true'
+    internet_check = env.get('INTERNET_CHECK', 'True').lower() == 'true'
     if internet_check:
         from src.utils.network_utils import check_internet_connection
         internet_available, error_message = check_internet_connection()
@@ -73,7 +84,7 @@ def main():
             print("Internet connection verified successfully")
     
     if stop_script:
-        message = "STOP_SCRIPT flag is set to True in .env - Exiting script early"
+        message = "STOP_SCRIPT flag is set to True in encrypted environment file - Exiting script early"
         print(message)
         logging.warning(message)
         sys.exit(0)
@@ -126,7 +137,13 @@ def main():
             print("Test completed with warnings")
         return result
     except Exception as e:
-        print(f"Test failed with error: {str(e)}")
+        # Log the error with simple message
+        logging.error(f"Test failed: {str(e)}")
+        
+        # Print a simple error message
+        print(f"ERROR: {str(e)}")
+        print(f"See log file for details: {log_file}")
+        
         return False
 
 if __name__ == "__main__":

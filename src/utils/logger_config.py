@@ -1,6 +1,7 @@
 import logging
 import os
 from datetime import datetime
+from src.utils.get_enc import EncEnv
 
 def setup_logging(log_level=logging.INFO):
     """
