@@ -51,8 +51,8 @@ class APIResponseTracking:
 
 
     def _create_op(self, item):
-        action = 'agregado'
-        estado = 'ca_completado'
+        action = item.get('accion')
+        estado = item.get('estado')
           
         # Parse the date string from DBF format to a proper date object
         print(f'item to insert {item}')
@@ -78,13 +78,17 @@ class APIResponseTracking:
             fecha_date
         )
    
-    def _details_completed(self, records):
+    def _details_waiting(self, records):
         """
         Process completed details (partidas) from API response
         """
+
         details = records.get('partidas')
+        action = records.get('accion')
+        estado = records.get('estado')
+
         if details:
-            return self.resp_detail_tracking.batch_replace_by_id(details)
+            return self.resp_detail_tracking.insert_details_on_wait(details, action, estado)
         return False
 
     

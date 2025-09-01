@@ -44,7 +44,7 @@ class ResponseTracking:
             return False
 
     def update_status(self, 
-                        id,
+                        id : str,
                         folio: str, 
                         total_partidas: int,
                         hash: str,
@@ -63,18 +63,27 @@ class ResponseTracking:
             ) as conn:
                 with conn.cursor() as cursor:
                     # Insert o update si existe
+                    # query = sql.SQL("""
+                    #     INSERT INTO estado_factura_venta (
+                    #         id,folio, total_partidas, hash,
+                    #         fecha_procesamiento, estado, fecha_emision, accion
+                    #     ) VALUES (%s,%s, %s, %s, %s, %s, %s, %s)
+                    #     ON CONFLICT (id) DO UPDATE SET
+                    #         estado = EXCLUDED.estado,
+                    #         hash = EXCLUDED.hash,
+                    #         accion = EXCLUDED.accion,
+                    #         fecha_procesamiento = %s,
+                    #         total_partidas = EXCLUDED.total_partidas,
+                    #         fecha_emision = EXCLUDED.fecha_emision
+                    #     RETURNING id
+                    # """)
+                    
+                    #INSERT ONLY
                     query = sql.SQL("""
                         INSERT INTO estado_factura_venta (
                             id,folio, total_partidas, hash,
                             fecha_procesamiento, estado, fecha_emision, accion
                         ) VALUES (%s,%s, %s, %s, %s, %s, %s, %s)
-                        ON CONFLICT (id) DO UPDATE SET
-                            estado = EXCLUDED.estado,
-                            hash = EXCLUDED.hash,
-                            accion = EXCLUDED.accion,
-                            fecha_procesamiento = %s,
-                            total_partidas = EXCLUDED.total_partidas,
-                            fecha_emision = EXCLUDED.fecha_emision
                         RETURNING id
                     """)
                     
@@ -87,8 +96,7 @@ class ResponseTracking:
                         current_date, 
                         estado, 
                         fecha_emision, 
-                        accion,
-                        current_date  # For the update
+                        accion
                     )
                     #print(f"\nSQL Operation for folio: {folio}")
                     #print(f"Parameters: {params}")

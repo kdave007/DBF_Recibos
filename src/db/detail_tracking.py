@@ -141,8 +141,23 @@ class DetailTracking:
         except Exception as e:
             logging.error(f"Error al obtener detalles por rango de fechas: {e}")
             return []
+
+    def insert_details_on_wait(self, details: List[Dict], action, estado) -> bool:
+        try:
+            with psycopg2.connect(
+                host=self.config['host'],
+                database=self.config['database'],
+                user=self.config['user'],
+                password=self.config['password'],
+                port=self.config['port']
+            ) as conn:
+                pass
+
+        except Exception as e:
+            logging.error(f"detail_tracking :: Error insert details on wait: {e}")
+            return False
     
-    def batch_replace_by_id(self, details: List[Dict]) -> bool:
+    def batch_replace_by_id(self, details: List[Dict], action, estado) -> bool:
         """
         Procesa múltiples detalles en una sola transacción, utilizando el ID como referencia
         principal en lugar del folio.
@@ -156,6 +171,7 @@ class DetailTracking:
         """
         if not details:
             return True  # Nothing to process
+        
             
         try:
             # Connect with explicit parameters instead of using **
@@ -220,8 +236,7 @@ class DetailTracking:
                                 
                                 # Extract values
                                 detail_hash = detail.get('hash_detail') or detail.get('hash_detalle') or detail.get('detail_hash')
-                                estado = 'pa_completado'
-                                operation = detail.get('accion', 'creado')
+                              
                                 
                                 params = (
                                     detail_id,  # Use the actual ID from the API
@@ -229,14 +244,14 @@ class DetailTracking:
                                     detail_hash,
                                     fecha,
                                     estado,
-                                    operation,
+                                    action,
                                     ref_value
                                 )
                                 
                                 # Debug print
                                 # logging.warning(f'////// /////// //////CHECKING FOR BUG DUPLICATE ID...')
                                 logging.info(f'detail_tracking :: INSERT REPLACE: ID={detail_id}, FOLIO={folio}, HASH={detail_hash}, '
-                                       f'FECHA={fecha}, ESTADO={estado}, ACCION={operation}, REF={ref_value}')
+                                       f'FECHA={fecha}, ESTADO={estado}, ACCION={action}, REF={ref_value}')
                                 
                                 cursor.execute(insert_query, params)
                                 inserted_count += 1

@@ -55,69 +55,66 @@ class OP:
         for record in records:
             print(f'RECORD FOUND {record}')
             print(f'------')
-            
-            
-            if self.bypass_ca:
-                print(f"Bypassing first API call for folio: {record.get('folio')}")
-                 
-            else:
+      
                 # Make the first API call
-                ca_req_result = self.send_req.create(record, base_url, api_key)
+            waiting_line_result = self.send_req.waiting_line(record, base_url, api_key)
 
+            print(f"waiting line result : {waiting_line_result}")
 
-                print(f' req result -----> {ca_req_result}')
-                # sys.exit()
-                
-                # Check if the first request was successful
-                if ca_req_result['success']:
-                    total_successfull_op += 1
-                    print(f"Successfully processed request for folio: {record.get('folio')}")
-                    #insert in the db the posted CA record
-                    if sql_enabled :
-                        fac_result = self.api_track._create_op(ca_req_result['success'][0])
-                        logging.info(f"insertion sql headers success: {fac_result}")
-                        # Process partidas (details)
-                        details_result = self.api_track._details_completed(ca_req_result['success'][0])
-                        logging.info(f"insertion sql details succes: {details_result}")
-
-                        if details_result == 0:
-                            logging.info(f"insertion sql details success: {details_result}")
-                            logging.info(f"When error happened, json : {ca_req_result['success'][0].get('json_resp')}")
-
-                        # Process recibos (receipts)
-                        receipts_result = self.api_track._receipts_completed(ca_req_result['success'][0])
-                        print(f"Receipts processing result: {receipts_result}")
-                        logging.info(f"insertion sql receipts success: {receipts_result}")
-
-
-                    #here insert in DB the PARTIDAS and RECIBOS 
-                     #update if it is a record retry    
-                    if sql_enabled :
-                        self._retry_completed(record)
-                else:
-                    print(f"Failed to process first request for folio: {record.get('folio')}")
-                    logging.error(f"Failed to process request for folio: {record.get('folio')}")
-                    total_failed_op += 1
-
-                    if ca_req_result.get('failed') and len(ca_req_result['failed']) > 0:
-                        # Use double quotes for outer string and ensure safe access to json_resp
-                        logging.info(f"Response when error happened :: {ca_req_result['failed'][0].get('json_resp', 'No JSON response available')}")
+            # sys.exit()
+            
+            # Check if the first request was successful
+            if waiting_line_result['success']:
+                total_successfull_op += 1
+                print(f"Successfully processed request for folio: {record.get('folio')}")
+                #insert in the db the posted CA record
+                # if sql_enabled :
+                if True :
+                    # fac_result = self.api_track._create_op(waiting_line_result['success'][0])
+                    # logging.info(f"insertion sql headers success: {fac_result}")
                     
-                    if sql_enabled :
-                        if ca_req_result.get('failed') and len(ca_req_result['failed']) > 0 and ca_req_result['failed'][0].get('error_msg'):
-                            self.error.insert(f"Failed process folio: {record.get('folio')}, "+f"{ ca_req_result['failed'][0]['error_msg']}", self.class_name)
-                        
-               
-                    if ca_req_result['failed']:
-                        for failure in ca_req_result['failed']:
-                            print(f"Failure reason: {failure.get('error_msg')}")
-                    # Skip to next record if first request failed
+                    # Process partidas (details)
+                    details_result = self.api_track._details_waiting(waiting_line_result['success'][0])
+                    logging.info(f"insertion sql details succes: {details_result}")
 
-                    #update retry
-                    if sql_enabled :
-                        self._retry_tracker(record)
+                    if details_result == 0:
+                        logging.info(f"insertion sql details success: {details_result}")
+                        logging.info(f"When error happened, json : {waiting_line_result['success'][0].get('json_resp')}")
+                    sys.exit()
+                    # Process recibos (receipts)
+                    receipts_result = self.api_track._receipts_completed(waiting_line_result['success'][0])
+                    print(f"Receipts processing result: {receipts_result}")
+                    logging.info(f"insertion sql receipts success: {receipts_result}")
 
-                    continue
+
+                #here insert in DB the PARTIDAS and RECIBOS 
+                    #update if it is a record retry    
+                if sql_enabled :
+                    self._retry_completed(record)
+            else:
+                print(f"Failed to process first request for folio: {record.get('folio')}")
+                logging.error(f"Failed to process request for folio: {record.get('folio')}")
+                total_failed_op += 1
+
+                if waiting_line_result.get('failed') and len(waiting_line_result['failed']) > 0:
+                    # Use double quotes for outer string and ensure safe access to json_resp
+                    logging.info(f"Response when error happened :: {waiting_line_result['failed'][0].get('json_resp', 'No JSON response available')}")
+                
+                if sql_enabled :
+                    if waiting_line_result.get('failed') and len(waiting_line_result['failed']) > 0 and waiting_line_result['failed'][0].get('error_msg'):
+                        self.error.insert(f"Failed process folio: {record.get('folio')}, "+f"{ waiting_line_result['failed'][0]['error_msg']}", self.class_name)
+                    
+            
+                if waiting_line_result['failed']:
+                    for failure in waiting_line_result['failed']:
+                        print(f"Failure reason: {failure.get('error_msg')}")
+                # Skip to next record if first request failed
+
+                #update retry
+                if sql_enabled :
+                    self._retry_tracker(record)
+
+                continue
         logging.info(f"//***// Total create successfull op {total_successfull_op}, total failed op {total_failed_op} //***//")
         return {total_successfull_op, total_failed_op}
             

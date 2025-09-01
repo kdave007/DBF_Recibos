@@ -91,3 +91,34 @@ class ResponseSimulator:
                 return self.json_data
         
         return MockResponse(json_data, status_code)
+
+        
+    @staticmethod
+    def simulate_id_response(min_value=1, max_value=1000):
+        """
+        Simulate a simple ID response with a plan number greater than 0.
+        
+        Args:
+            min_value (int): Minimum value for the ID (default: 1)
+            max_value (int): Maximum value for the ID (default: 1000)
+            
+        Returns:
+            MockResponse: A mock response object containing the ID as plain text
+        """
+        id_value = random.randint(min_value, max_value)
+        
+        class MockResponse:
+            def __init__(self, id_value):
+                self.status_code = 200
+                # Store the ID as the response text directly
+                self.text = str(id_value)
+                self.headers = {
+                    'Content-Type': 'text/plain',
+                    'Date': datetime.now().strftime('%a, %d %b %Y %H:%M:%S GMT')
+                }
+            
+            def json(self):
+                # This will raise an exception if called, as this is not JSON
+                raise ValueError("Response is not JSON format")
+        
+        return MockResponse(id_value)
