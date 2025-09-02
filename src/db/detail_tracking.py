@@ -151,7 +151,53 @@ class DetailTracking:
                 password=self.config['password'],
                 port=self.config['port']
             ) as conn:
-                pass
+
+                deleted_count = 0
+                inserted_count = 0
+               
+                for detail in details:
+                    detail_id = detail.get('id')
+                    
+                    try:
+                        with conn.cursor() as cursor:
+
+                            delete_query = "DELETE FROM detalle_estado WHERE id = %s AND folio = %s AND indice = %s"
+                            cursor.execute(delete_query, (detail_id, detail.get('folio'), detail.get('indice') ))
+                            deleted_count += cursor.rowcount
+                            print(f"Deleted {cursor.rowcount} existing records for ID {detail_id}")
+
+                            # Insert query
+                            insert_query = """
+                                INSERT INTO detalle_estado (
+                                    id, folio, hash_detalle, fecha, estado, accion, ref, indice
+                                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                            """
+                            params = (
+                                    detail_id,  # Use the actual ID from the API
+                                    detail.get('folio'),
+                                    detail.get('detail_hash'),
+                                    detail.get('fecha'),
+                                    estado,
+                                    action,
+                                    detail.get('ref'),
+                                    detail.get('indice')
+                                )
+
+                            cursor.execute(insert_query, params)
+                            inserted_count += 1
+
+                            print(f'detail_tracking :: INSERT REPLACE: ID={detail_id}, FOLIO={detail.get('folio')}, HASH={detail.get('detail_hash')}, '
+                            f'FECHA={detail.get('fecha')}, ESTADO={estado}, ACCION={action}, REF={detail.get('ref')}, INDICE={detail.get('indice')}')
+
+                        # Commit the transaction for this ID
+                        conn.commit()
+                        print(f"Successfully processed ID {detail_id}: deleted {deleted_count}, inserted {inserted_count}")
+
+                    except Exception as e:
+                        logging.error(f"DETAILS :: Error in insert details on wait: {e}")
+                        return False
+
+                return inserted_count > 0
 
         except Exception as e:
             logging.error(f"detail_tracking :: Error insert details on wait: {e}")

@@ -8,9 +8,12 @@ from src.db.error_tracking import ErrorTracking
 from datetime import datetime, date
 import os
 import sys
+import json
+import time
 import logging
 from dotenv import load_dotenv
 from src.utils.get_enc import EncEnv
+from src.controllers.pending_records_controller import PendingRecordsController
 
 # Load environment variables
 load_dotenv()
@@ -25,12 +28,24 @@ class OP:
         self.retries_track = RetriesTracking(self.db_config)
         self.error = ErrorTracking(self.db_config)
         self.env = EncEnv()
+        self.pending_records = PendingRecordsController(self.db_config)
 
         self.bypass_ca = False
 
         if "create" in operations:
-            ops = self._create(operations['create'])
-            logging.info(f"request to upload data finished")
+            # ops = self._create(operations['create'])
+            logging.info(f"request to upload waiting line data finished")
+            
+            time.sleep(2)
+
+            self.pending_records.get_pending_records()
+            sys.exit()
+
+
+
+
+
+
             
 
         if "update" in operations:
@@ -67,11 +82,11 @@ class OP:
             if waiting_line_result['success']:
                 total_successfull_op += 1
                 print(f"Successfully processed request for folio: {record.get('folio')}")
-                #insert in the db the posted CA record
+
                 # if sql_enabled :
                 if True :
-                    # fac_result = self.api_track._create_op(waiting_line_result['success'][0])
-                    # logging.info(f"insertion sql headers success: {fac_result}")
+                    fac_result = self.api_track._create_op(waiting_line_result['success'][0])
+                    logging.info(f"insertion sql headers success: {fac_result}")
                     
                     # Process partidas (details)
                     details_result = self.api_track._details_waiting(waiting_line_result['success'][0])
@@ -80,11 +95,12 @@ class OP:
                     if details_result == 0:
                         logging.info(f"insertion sql details success: {details_result}")
                         logging.info(f"When error happened, json : {waiting_line_result['success'][0].get('json_resp')}")
-                    sys.exit()
+                   
                     # Process recibos (receipts)
-                    receipts_result = self.api_track._receipts_completed(waiting_line_result['success'][0])
+                    receipts_result = self.api_track._receipts_waiting(waiting_line_result['success'][0])
                     print(f"Receipts processing result: {receipts_result}")
                     logging.info(f"insertion sql receipts success: {receipts_result}")
+                    sys.exit()
 
 
                 #here insert in DB the PARTIDAS and RECIBOS 

@@ -91,6 +91,19 @@ class APIResponseTracking:
             return self.resp_detail_tracking.insert_details_on_wait(details, action, estado)
         return False
 
+    def _receipts_waiting(self, records):
+        """
+        Process completed details (partidas) from API response
+        """
+
+        receipts = records.get('recibos')
+        action = records.get('accion')
+        estado = records.get('estado')
+
+        if receipts:
+            return self.resp_receipt_tracking.insert_receipts_on_wait(receipts, action, estado)
+        return False
+
     
     def _receipts_completed(self, records):
         """

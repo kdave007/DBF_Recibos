@@ -174,21 +174,19 @@ class SendRequest:
                 -Save in a table the Folio (num_doc), year (date ) and serie, this table will contain the waiting list of fac in process
                 -Later on make a GET request with the 3 params so the server will respond with the required ID's to save in the DB log.
             """ 
+            response_value = response.text
 
-            if response.status_code in [200, 201, 202, 204]:
-                response_value = response.text
+            if response.status_code in [200, 201, 202, 204] and response_value is not 0:
+                
                 # formatted_json = json.dumps(response_json, indent=4, sort_keys=False)
                 print(f"Response waiting line ID for folio {folio}: {response_value}")
 
-                if response_value is 0:
-                    pass
-
                 success_entry = {
                         'folio': folio,
-                        'id': 0,
+                        'id': response_value,
                         'fecha_emision': dbf_record.get('fecha'),
                         'total_partidas': len(dbf_record.get('detalles', [])),
-                        'hash': record.get('dbf_hash', ''),
+                        'hash': dbf_record.get('dbf_hash', ''),
                         'status': response.status_code,
                         'accion':'enviado',
                         'estado':'pendiente',
@@ -197,12 +195,13 @@ class SendRequest:
                 }
 
                 if len(dbf_record.get('detalles', [])) > 0 :
-                     for index, detail in enumerate(dbf_record.get('detalles', []),1):
+                    for index, detail in enumerate(dbf_record.get('detalles', []),1):
                         data = {
                             'id': 0,
                             'indice': index,
                             'folio': str(folio),
-                            'ref': detail['art'],
+                            'ref': detail['REF'],
+                            'fecha': self._format_date_to_iso(dbf_record.get('fecha')),
                             'detail_hash':detail['detail_hash'],
                         }
 
@@ -218,32 +217,48 @@ class SendRequest:
                             'id_rbo_cob_t': None,
                             'id_fac': 0,
                             'indice':index,
+                            'accion':'enviado',
+                            'estado':'pendiente',
+                            'num_ref':rec.get('ref_recibo'),
                             'folio': str(folio),  # From CA
+                            'fecha':self._format_date_to_iso(dbf_record.get('fecha'))
                         }
 
                         success_entry['recibos'].append(data)
                 
                 results['success'].append(success_entry)
-                        
                 print(f"Successfully processed response for folio {folio}")
+                    
             else:
                 results['failed'].append({
                     'folio': folio,
                     'fecha_emision': dbf_record.get('fecha'),
                     'total_partidas': len(dbf_record.get('detalles', [])),
-                    'hash': record.get('dbf_hash', ''),
+                    'hash': dbf_record.get('dbf_hash', ''),
                     'status': response.status_code,
-                    'error_msg': error_message
+                    'error_msg': "response by server : "+response_value
                 })                    
                 
 
+        #     
+        except Exception as e:
+            logging.info(f"Exception during create operation: {str(e)}")
+            error_message = f"Exception during create operation: {str(e)}"
+            print(error_message)
+            # Mark the record as failed
+            results['failed'].append({
+                'folio': folio, 
+                'fecha_emision': dbf_record.get('fecha'),
+                'hash': record.get('dbf_hash', ''),
+                'status': None,
+                'error_msg': error_message
+            })
+                  
+        return results
 
-                    
-
-
-            #REFERENCE FUNCTIONS BELOW -----------------------------------
-
-        #     if response.status_code in [200, 201, 202, 204]:
+    def delivered(self,params):
+        pass
+        #    if response.status_code in [200, 201, 202, 204]:
         #         try:
         #             # Parse response JSON
         #             response_json = response.json()
@@ -424,23 +439,6 @@ class SendRequest:
         #             'error_msg': error_message
         #         })
                 
-        except Exception as e:
-            logging.info(f"Exception during create operation: {str(e)}")
-            error_message = f"Exception during create operation: {str(e)}"
-            print(error_message)
-            # Mark the record as failed
-            results['failed'].append({
-                'folio': folio, 
-                'fecha_emision': dbf_record.get('fecha'),
-                'hash': record.get('dbf_hash', ''),
-                'status': None,
-                'error_msg': error_message
-            })
-                  
-        return results
-
-    def delivered(self,params):
-        pass
 
 
         
