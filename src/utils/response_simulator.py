@@ -9,12 +9,12 @@ class ResponseSimulator:
     """
     
     @staticmethod
-    def simulate_response(dbf_record, folio, status_code=200):
+    def simulate_response(record, folio, status_code=200):
         """
         Simulate an API response based on the provided DBF record.
         
         Args:
-            dbf_record (dict): The DBF record containing details and receipts
+            record (dict): The DBF record containing details and receipts
             folio (str): The folio number for the record
             status_code (int): HTTP status code to simulate
             
@@ -37,16 +37,15 @@ class ResponseSimulator:
             "STATUS": "OK",
             "PA": [],
             "CO": {
-                "ID_CTA_COR_T": id_cta_cor_t,
-                "ID_DTL_DOC_COB_T": id_dtl_doc_cob_t,
-                "ID_RBO_COB_T": id_rbo_cob_t,
-                "ID_DTL_COB_APL_T": []
+                "CTA_COR_T": [],
+                "DTL_COB_APL_T": [],
+                "DTL_DOC_COB_T": []
             }
         }
         
         # Generate PA (partidas) entries based on details in the record
-        details = dbf_record.get('detalles', [])
-        for i, detail in enumerate(details, 1):
+        total_details = record.get('total_partidas', 0)
+        for i in range(1, total_details + 1):
             pa_entry = {
                 "id": random.randint(1, 1000),
                 "_indice": i
@@ -54,14 +53,30 @@ class ResponseSimulator:
             response["PA"].append(pa_entry)
             # response["PA"].append(pa_entry)#
         
-        # Generate ID_DTL_COB_APL_T entries based on receipts in the record
-        receipts = dbf_record.get('recibos', [])
-        for i, receipt in enumerate(receipts, 1):
+        # Generate entries for CO arrays based on total receipts count
+        total_receipts = record.get('total_recibos', 0)
+        for i in range(1, total_receipts + 1):
+            # Add CTA_COR_T entry
+            cta_cor_entry = {
+                "_indice": i,
+                "id": random.randint(1000, 9999)
+            }
+            response["CO"]["CTA_COR_T"].append(cta_cor_entry)
+            
+            # Add DTL_COB_APL_T entry
             dtl_cob_apl_entry = {
-                "ID_DTL_COB_APL_T": random.randint(1, 1000),
+                "ID_DTL_COB_APL": i,
                 "_indice": i
             }
-            response["CO"]["ID_DTL_COB_APL_T"].append(dtl_cob_apl_entry)
+            response["CO"]["DTL_COB_APL_T"].append(dtl_cob_apl_entry)
+            
+            # Add DTL_DOC_COB_T entry
+            dtl_doc_cob_entry = {
+                "ID_DTL_DOC_COB_T": i,
+                "ID_RBO_COB_T": random.randint(1000, 9999),
+                "_indice": i
+            }
+            response["CO"]["DTL_DOC_COB_T"].append(dtl_doc_cob_entry)
         
         return status_code, response
     

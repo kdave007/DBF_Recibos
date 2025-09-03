@@ -14,6 +14,7 @@ import logging
 from dotenv import load_dotenv
 from src.utils.get_enc import EncEnv
 from src.controllers.pending_records_controller import PendingRecordsController
+from src.controllers.get_pendings_req import GetPendingReq
 
 # Load environment variables
 load_dotenv()
@@ -29,24 +30,20 @@ class OP:
         self.error = ErrorTracking(self.db_config)
         self.env = EncEnv()
         self.pending_records = PendingRecordsController(self.db_config)
+        self.get_pending = GetPendingReq()
 
         self.bypass_ca = False
 
         if "create" in operations:
-            # ops = self._create(operations['create'])
+            ops = self._create(operations['create'])
             logging.info(f"request to upload waiting line data finished")
-            
+            #wait here till the server process the documents...
             time.sleep(2)
+            logging.info(f"START ::  GET request for documents uploaded to the server...")
+            pr = self.pending_records.get_pending_records()
+            results = self.get_pending.send(pr)
+            self.update_pending(results)
 
-            self.pending_records.get_pending_records()
-            sys.exit()
-
-
-
-
-
-
-            
 
         if "update" in operations:
             pass
@@ -83,8 +80,8 @@ class OP:
                 total_successfull_op += 1
                 print(f"Successfully processed request for folio: {record.get('folio')}")
 
-                # if sql_enabled :
-                if True :
+                if sql_enabled :
+               
                     fac_result = self.api_track._create_op(waiting_line_result['success'][0])
                     logging.info(f"insertion sql headers success: {fac_result}")
                     
@@ -100,7 +97,7 @@ class OP:
                     receipts_result = self.api_track._receipts_waiting(waiting_line_result['success'][0])
                     print(f"Receipts processing result: {receipts_result}")
                     logging.info(f"insertion sql receipts success: {receipts_result}")
-                    sys.exit()
+                   
 
 
                 #here insert in DB the PARTIDAS and RECIBOS 
@@ -133,36 +130,34 @@ class OP:
                 continue
         logging.info(f"//***// Total create successfull op {total_successfull_op}, total failed op {total_failed_op} //***//")
         return {total_successfull_op, total_failed_op}
+     
+    def update_pending(self, results):
+        """TODO: 
+            read values and just update status and id´s for each partition, create an update status and id method for ca, pa, and co
+        """
+        if results['success']:
+            total_successfull_op += 1
+            print(f"Successfully processed request for folio: {record.get('folio')}")
+
+            if sql_enabled :
             
-            # if first_request_success:
+                fac_result = self.api_track._create_op(results['success'][0])
+                logging.info(f"insertion sql headers success: {fac_result}")
+                
+                # Process partidas (details)
+                details_result = self.api_track._details_waiting(results['success'][0])
+                logging.info(f"insertion sql details succes: {details_result}")
 
-            #     if self.bypass_ca:
-            #         parent_ref = {
-            #             'parent_id':  111,
-            #             'fecha': record['dbf_record'].get('fecha')
-            #         }
-            #     else:    
-            #         parent_ref = {
-            #             'parent_id':  ca_req_result['success'][0].get('id'),
-            #             'fecha': ca_req_result['success'][0].get('fecha_emision')
-            #         }
+                if details_result == 0:
+                    logging.info(f"insertion sql details success: {details_result}")
+                    logging.info(f"When error happened, json : {results['success'][0].get('json_resp')}")
                 
-            #     print(f"Ready to process details request for folio: {record.get('folio')}")
-                
-            #     det_req_results = self.send_det.req_post(record['dbf_record'].get('detalles'), parent_ref)
+                # Process recibos (receipts)
+                receipts_result = self.api_track._receipts_waiting(results['success'][0])
+                print(f"Receipts processing result: {receipts_result}")
+                logging.info(f"insertion sql receipts success: {receipts_result}")
+                   
 
-            #     if det_req_results['failed']:
-            #         #one request failed, so skip to next CA
-            #         continue
-                
-            #     # Update the record status to indicate details were processed successfully
-            #     self.api_track._pa_completed(parent_ref['parent_id'])
-            #     self.api_track.update_create_details(det_req_results['records'])
-                
-            #     # Call after request handler
-            #     emp =  record['dbf_record']['detalles'][0].get('emp')
-            #     emp_div =  record['dbf_record']['detalles'][0].get('emp_div')
-            #     self._after_request(parent_ref['parent_id'], emp, emp_div)
                 
 
     def _update(self, records):

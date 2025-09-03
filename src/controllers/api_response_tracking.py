@@ -68,14 +68,15 @@ class APIResponseTracking:
             fecha_date = datetime.now().date()
             print(f"Warning: Could not parse date '{fecha_str}', using current date instead")
         
-        return self.resp_tracking.update_status(
+        return self.resp_tracking.insert_fac(
             item.get('id'),
             item.get('folio'),
             item.get('total_partidas'),
             item.get('hash'),
             estado,
             action,
-            fecha_date
+            fecha_date,
+            item.get('total_recibos')
         )
    
     def _details_waiting(self, records):
@@ -144,7 +145,7 @@ class APIResponseTracking:
                     fecha_date = datetime.now().date()
                     print(f"Warning: Could not parse date '{fecha_str}', using current date instead")
                 
-                done = self.resp_tracking.update_status(
+                done = self.resp_tracking.insert_fac(
                     item.get('id'),
                     item.get('folio'),
                     item.get('total_partidas'),

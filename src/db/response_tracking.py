@@ -43,14 +43,16 @@ class ResponseTracking:
             print(f"Error deleting record with ID {id}: {e}")
             return False
 
-    def update_status(self, 
+    def insert_fac(self, 
                         id : str,
                         folio: str, 
                         total_partidas: int,
                         hash: str,
                         estado: str,
                         accion: str,
-                        fecha_emision: date) -> bool:
+                        fecha_emision: date,
+                        total_recibos : int
+                        ) -> bool:
         """Actualiza o inserta estado de factura"""
         try:
             # Connect with explicit parameters instead of using **
@@ -82,8 +84,8 @@ class ResponseTracking:
                     query = sql.SQL("""
                         INSERT INTO estado_factura_venta (
                             id,folio, total_partidas, hash,
-                            fecha_procesamiento, estado, fecha_emision, accion
-                        ) VALUES (%s,%s, %s, %s, %s, %s, %s, %s)
+                            fecha_procesamiento, estado, fecha_emision, accion, total_recibos
+                        ) VALUES (%s,%s, %s, %s, %s, %s, %s, %s, %s)
                         RETURNING id
                     """)
                     
@@ -96,7 +98,8 @@ class ResponseTracking:
                         current_date, 
                         estado, 
                         fecha_emision, 
-                        accion
+                        accion,
+                        total_recibos
                     )
                     #print(f"\nSQL Operation for folio: {folio}")
                     #print(f"Parameters: {params}")

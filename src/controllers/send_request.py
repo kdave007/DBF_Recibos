@@ -186,6 +186,7 @@ class SendRequest:
                         'id': response_value,
                         'fecha_emision': dbf_record.get('fecha'),
                         'total_partidas': len(dbf_record.get('detalles', [])),
+                        'total_recibos': len(dbf_record.get('recibos', [])),
                         'hash': dbf_record.get('dbf_hash', ''),
                         'status': response.status_code,
                         'accion':'enviado',
@@ -234,6 +235,7 @@ class SendRequest:
                     'folio': folio,
                     'fecha_emision': dbf_record.get('fecha'),
                     'total_partidas': len(dbf_record.get('detalles', [])),
+                    'total_recibos': len(dbf_record.get('recibos', [])),
                     'hash': dbf_record.get('dbf_hash', ''),
                     'status': response.status_code,
                     'error_msg': "response by server : "+response_value

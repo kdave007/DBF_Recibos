@@ -55,7 +55,12 @@ class PendingRecordsController:
         for record in records:
             # Get the store from the folio (assuming folio format contains store info)
             formatted_record['num_doc'] = record.get('folio')
-            formatted_record['id'] = record.get('id')
+            formatted_record['id'] = int(record.get('id'))
+
+            #mainly used for debug simulated response mode
+            formatted_record['total_partidas'] = int(record.get('total_partidas', 0))
+            formatted_record['total_recibos'] = int(record.get('total_recibos', 0))
+       
             # Extract store from folio or use a default
             store = self.env.get("CLAVE_SUCURSAL")
 

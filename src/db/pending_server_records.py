@@ -31,8 +31,8 @@ class PendingServerRecords:
                 
                 # Correct SQL query with FROM clause and proper WHERE syntax
                 query = """
-                    SELECT id, folio, fecha_emision, hash, fecha_procesamiento 
-                    FROM estado_factura_venta 
+                    SELECT id, folio, fecha_emision, hash, fecha_procesamiento , total_partidas, total_recibos
+                    FROM estado_factura_venta
                     WHERE estado = 'pendiente' AND accion = 'enviado'
                     ORDER BY fecha_procesamiento DESC
                     LIMIT %s
@@ -53,7 +53,9 @@ class PendingServerRecords:
                             'folio': row[1],
                             'fecha_emision': row[2],
                             'hash': row[3],
-                            'fecha_procesamiento': row[4]
+                            'fecha_procesamiento': row[4],
+                            'total_partidas': row[5],
+                            'total_recibos': row[6]
                         })
                     
                     if not result:
