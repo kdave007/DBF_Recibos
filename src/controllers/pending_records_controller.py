@@ -3,6 +3,7 @@ from src.db.pending_server_records import PendingServerRecords
 from src.controllers.send_request import SendRequest
 from src.db.velneo_mappings import VelneoMappings
 from src.utils.get_enc import EncEnv
+import sys
     
 
 
@@ -31,8 +32,10 @@ class PendingRecordsController:
         results = []
         pending = self.pending_records.get_pending_records(limit)
         # print(f'PENDING LIST : {pending}')
+        
         results = self._format_records(pending)
-        print(f'PENDING LIST : {results}')
+        # print(f'PENDING LIST : {results}')
+      
         return results
 
     
@@ -50,10 +53,11 @@ class PendingRecordsController:
             return []
             
         formatted_records = []
-        formatted_record = {}
+        
         
         for record in records:
             # Get the store from the folio (assuming folio format contains store info)
+            formatted_record = {}
             formatted_record['num_doc'] = record.get('folio')
             formatted_record['id'] = int(record.get('id'))
 
@@ -71,7 +75,7 @@ class PendingRecordsController:
             # Get serie from velneo mappings
             formatted_record['serie'] = self.velneo_mappings.get_from_general_serie(store)
 
-          
+            # print(f' ******************FORMATTING {formatted_record}')
             formatted_records.append(formatted_record)
             
         return formatted_records

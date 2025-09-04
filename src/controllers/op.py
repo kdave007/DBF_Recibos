@@ -31,18 +31,22 @@ class OP:
         self.env = EncEnv()
         self.pending_records = PendingRecordsController(self.db_config)
         self.get_pending = GetPendingReq()
+        self.sql_enabled = self.env.get('SQL_ENABLED', 'True').lower() == 'true'
 
         self.bypass_ca = False
 
         if "create" in operations:
-            ops = self._create(operations['create'])
+            create_results = self._create(operations['create'])
             logging.info(f"request to upload waiting line data finished")
             #wait here till the server process the documents...
+            # sys.exit()
             time.sleep(2)
             logging.info(f"START ::  GET request for documents uploaded to the server...")
-            pr = self.pending_records.get_pending_records()
-            results = self.get_pending.send(pr)
-            self.update_pending(results)
+            update_results = self.update_pending()
+
+            logging.info(f"RESUME :: ")
+            logging.info(f"//***// Total POST successfull op {create_results['success']}, total failed op {create_results['failed']} //***//")
+            logging.info(f"//***// Total GET successfull op {update_results['success']}, total failed op {update_results['failed']} //***//")
 
 
         if "update" in operations:
@@ -63,7 +67,7 @@ class OP:
         total_failed_op = 0
         
         # Check if SQL operations are enabled
-        sql_enabled = self.env.get('SQL_ENABLED', 'True').lower() == 'true'
+        
         for record in records:
             print(f'RECORD FOUND {record}')
             print(f'------')
@@ -80,7 +84,7 @@ class OP:
                 total_successfull_op += 1
                 print(f"Successfully processed request for folio: {record.get('folio')}")
 
-                if sql_enabled :
+                if self.sql_enabled :
                
                     fac_result = self.api_track._create_op(waiting_line_result['success'][0])
                     logging.info(f"insertion sql headers success: {fac_result}")
@@ -102,7 +106,7 @@ class OP:
 
                 #here insert in DB the PARTIDAS and RECIBOS 
                     #update if it is a record retry    
-                if sql_enabled :
+                if self.sql_enabled :
                     self._retry_completed(record)
             else:
                 print(f"Failed to process first request for folio: {record.get('folio')}")
@@ -113,7 +117,7 @@ class OP:
                     # Use double quotes for outer string and ensure safe access to json_resp
                     logging.info(f"Response when error happened :: {waiting_line_result['failed'][0].get('json_resp', 'No JSON response available')}")
                 
-                if sql_enabled :
+                if self.sql_enabled :
                     if waiting_line_result.get('failed') and len(waiting_line_result['failed']) > 0 and waiting_line_result['failed'][0].get('error_msg'):
                         self.error.insert(f"Failed process folio: {record.get('folio')}, "+f"{ waiting_line_result['failed'][0]['error_msg']}", self.class_name)
                     
@@ -124,39 +128,72 @@ class OP:
                 # Skip to next record if first request failed
 
                 #update retry
-                if sql_enabled :
+                if self.sql_enabled :
                     self._retry_tracker(record)
 
                 continue
-        logging.info(f"//***// Total create successfull op {total_successfull_op}, total failed op {total_failed_op} //***//")
-        return {total_successfull_op, total_failed_op}
+        # logging.info(f"//***// Total create successfull op {total_successfull_op}, total failed op {total_failed_op} //***//")
+        return {'success' : total_successfull_op, 'failed' : total_failed_op}
+
      
-    def update_pending(self, results):
+    def update_pending(self):
         """TODO: 
-            read values and just update status and id´s for each partition, create an update status and id method for ca, pa, and co
+            read values and just update status and ids for each partition, create an update status and id method for ca, pa, and co
         """
-        if results['success']:
-            total_successfull_op += 1
-            print(f"Successfully processed request for folio: {record.get('folio')}")
+        total_successfull_op = 0
+        total_failed_op = 0
+        
+        pendings = self.pending_records.get_pending_records()
 
-            if sql_enabled :
-            
-                fac_result = self.api_track._create_op(results['success'][0])
-                logging.info(f"insertion sql headers success: {fac_result}")
-                
-                # Process partidas (details)
-                details_result = self.api_track._details_waiting(results['success'][0])
-                logging.info(f"insertion sql details succes: {details_result}")
+        print(f'pendings {pendings}')
 
-                if details_result == 0:
-                    logging.info(f"insertion sql details success: {details_result}")
-                    logging.info(f"When error happened, json : {results['success'][0].get('json_resp')}")
+        for record in pendings:
+
+            #DEBUG RETURN, DELETE AFTER TESTING ---------------------------------------------------------
+            # if total_successfull_op > 3 or total_failed_op > 3:
+            #     return {'success' : total_successfull_op, 'failed' : total_failed_op}
+
+            folio = record.get('num_doc')
+            results = self.get_pending.send(record)
+
+            print(f'GET REQUEST  {folio}')
+
+            if results['success']:
+                total_successfull_op += 1
+                print(f"Successfully processed GET request for folio: {folio}")
+
+                if self.sql_enabled :
                 
-                # Process recibos (receipts)
-                receipts_result = self.api_track._receipts_waiting(results['success'][0])
-                print(f"Receipts processing result: {receipts_result}")
-                logging.info(f"insertion sql receipts success: {receipts_result}")
+                    fac_result = self.api_track._head_completed(results['success'][0])
+                    logging.info(f"insertion sql headers success: {fac_result}")
                    
+                    
+                    # Process partidas (details)
+                    details_result = self.api_track._detail_completed(results['success'][0])
+                    logging.info(f"insertion sql details succes: {details_result}")
+                    
+
+                    if details_result == 0:
+                        logging.info(f"insertion sql details success: {details_result}")
+                        logging.info(f"When error happened, json : {results['success'][0].get('json_resp')}")
+                    
+                    
+                    # Process recibos (receipts)
+                    receipts_result = self.api_track._receipt_completed(results['success'][0])
+                    print(f"Receipts processing result: {receipts_result}")
+                    logging.info(f"insertion sql receipts success: {receipts_result}")
+            
+            else :
+                print(f"Failed to process GET request for folio: {folio}")
+                logging.error(f"Failed to process GET request for folio: {folio}")
+                total_failed_op += 1
+
+                if results.get('failed') and len(results['failed']) > 0:
+                    # Use double quotes for outer string and ensure safe access to json_resp
+                    logging.info(f"Response when error happened :: {results['failed'][0].get('json_resp', 'No JSON response available')}")
+            
+
+        return {'success' : total_successfull_op, 'failed' : total_failed_op}
 
                 
 

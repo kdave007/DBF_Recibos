@@ -61,7 +61,7 @@ class EncEnv:
             # Use dotenv to load from the original .env file
             from dotenv import dotenv_values
             env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), '.env')
-            print(f"Loading environment from original .env file at: {env_path}")
+            # print(f"Loading environment from original .env file at: {env_path}")
             self.env_vars = dotenv_values(env_path)
             # print(f"Loaded {len(self.env_vars)} environment variables from .env")
         else:

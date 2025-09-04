@@ -288,6 +288,47 @@ class VelneoMappings:
                 # Return connection to pool instead of closing
                 self.pool.release_connection(conn)
 
+    def get_metodo_fpg_V(self, reference):
+        """Get the Velneo ID for a payment method from metodo_pago table
+        
+        Args:
+            reference: The reference to look for in the pvsi column
+            
+        Returns:
+            int: The velneo value if found, None otherwise
+        """
+        conn = None
+        cursor = None
+        try:
+            # Get connection from pool
+            conn = self.pool.get_connection()
+            if not conn:
+                logging.error("Could not get database connection from pool")
+                return None
+                
+            cursor = conn.cursor()
+            
+            query = """
+            SELECT velneo FROM fpg_V 
+            WHERE pvsi = %s
+            LIMIT 1
+            """
+            
+            cursor.execute(query, (reference,))
+            result = cursor.fetchone()
+            
+            return result[0] if result else None
+            
+        except Exception as e:
+            logging.error(f"Error retrieving payment method Velneo ID: {e}")
+            return None
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                # Return connection to pool instead of closing
+                self.pool.release_connection(conn)
+
     def get_pais(self, reference):
         conn = None
         cursor = None
@@ -493,6 +534,39 @@ class VelneoMappings:
             if conn:
                 # Return connection to pool instead of closing
                 self.pool.release_connection(conn)
+    
+    def get_cja_bco_v(self, reference):
+        conn = None
+        cursor = None
+        try:
+            # Get connection from pool
+            conn = self.pool.get_connection()
+            if not conn:
+                logging.error("Could not get database connection from pool")
+                return None
+                
+            cursor = conn.cursor()
+            
+            query = """
+            SELECT velneo FROM cja_bco_V
+            WHERE pvsi = %s
+            LIMIT 1
+            """
+            
+            cursor.execute(query, (reference,))
+            result = cursor.fetchone()
+            
+            return result[0] if result else None
+        
+        except Exception as e:
+            logging.error(f"Error retrieving caja_banco Velneo ID: {e}")
+            return None
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                # Return connection to pool instead of closing
+                self.pool.release_connection(conn)
 
     def get_forma_pago(self, reference):
         conn = None
@@ -546,6 +620,40 @@ class VelneoMappings:
             UNION ALL
             SELECT forma_pago FROM forma_pago_caja_banco 
             WHERE caja_banco = 'default_value'
+            LIMIT 1
+            """
+            
+            cursor.execute(query, (reference,))
+            result = cursor.fetchone()
+            
+            return result[0] if result else None
+        
+        except Exception as e:
+            logging.error(f"Error retrieving forma_pago Velneo ID: {e}")
+            return None
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                # Return connection to pool instead of closing
+                self.pool.release_connection(conn)
+
+    def get_forma_mpg_v(self, reference):
+        conn = None
+        cursor = None
+        try:
+            # Get connection from pool
+            conn = self.pool.get_connection()
+            if not conn:
+                logging.error("Could not get database connection from pool")
+                return None
+                
+            cursor = conn.cursor()
+           
+            # Single query with a fallback to default_value if no match found
+            query = """
+            SELECT velneo FROM mpg_v 
+            WHERE pvsi = %s
             LIMIT 1
             """
             

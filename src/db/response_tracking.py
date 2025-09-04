@@ -121,7 +121,7 @@ class ResponseTracking:
             logging.error(f"Error insertando estado: {e}")
             return False
             
-    def update_record_status(self, id: int, estado: str, accion: str) -> bool:
+    def update_head_status(self, folio, new_id: int, estado: str, accion: str) -> bool:
         """Update only the estado and accion fields for a record by its ID
         
         Args:
@@ -147,24 +147,148 @@ class ResponseTracking:
                         UPDATE estado_factura_venta 
                         SET estado = %s, 
                             accion = %s,
-                            fecha_procesamiento = %s
-                        WHERE id = %s
+                            id = %s
+                        WHERE folio = %s
                         RETURNING id
                     """)
                     
                     # Execute the query with current timestamp
                     current_date = datetime.now()
-                    cursor.execute(query, (estado, accion, current_date, id))
+                    cursor.execute(query, (estado, accion, new_id, folio))
                     updated_id = cursor.fetchone()
                     conn.commit()
                     
                     if updated_id:
-                        print(f"Successfully updated status for record with ID {id}")
+                        logging.info(f"Successfully updated status for record with ID {id}")
                         return True
                     else:
-                        print(f"No record found with ID {id}")
+                        logging.warning(f"No record found with ID {id}")
                         return False
                         
         except Exception as e:
-            logging.error(f"Error updating status for record with ID {id}: {e}")
+            logging.error(f"response_tracking :: Error updating status for record with ID {id}: {e}")
+            return False
+
+
+    def update_detail_status(self, details) -> bool:
+        """Update estado and id fields for multiple detail records
+        
+        Args:
+            details: List of detail records to update
+            
+        Returns:
+            bool: True if all updates were successful, False otherwise
+        """
+        if not details or len(details) == 0:
+            logging.warning("No details provided to update")
+            return False
+            
+        success_count = 0
+        total_count = len(details)
+        
+        try:
+            # Connect with explicit parameters
+            with psycopg2.connect(
+                host=self.config['host'],
+                database=self.config['database'],
+                user=self.config['user'],
+                password=self.config['password'],
+                port=self.config['port']
+            ) as conn:
+                with conn.cursor() as cursor:
+                    # Process each detail record
+                    for record in details:
+                        estado = record.get('estado')
+                        folio = record.get('folio')
+                        new_id = record.get('id')
+                        indice = record.get('indice')
+                        
+                        if not all([estado, folio, new_id, indice]):
+                            logging.warning(f"Missing required fields in detail record: {record}")
+                            continue
+
+                        query = sql.SQL("""
+                            UPDATE detalle_estado
+                            SET estado = %s, 
+                                id = %s
+                            WHERE folio = %s AND indice = %s
+                            RETURNING id
+                        """)
+                        
+                        cursor.execute(query, (estado, new_id, folio, indice))
+                        updated_id = cursor.fetchone()
+                        conn.commit()
+                        
+                        if updated_id:
+                            logging.info(f"Successfully updated detail status for folio {folio}, indice {indice}")
+                            success_count += 1
+                        else:
+                            logging.warning(f"No detail record found for folio {folio}, indice {indice}")
+                    
+                    return success_count == total_count  # Return True only if all updates succeeded
+                        
+        except Exception as e:
+            logging.error(f"response_tracking :: Error updating detail statuses: {e}")
+            return False
+
+    
+    def update_receipt_status(self, receipts) -> bool:
+        """Update estado and response fields for multiple receipt records
+        
+        Args:
+            receipts: List of receipt records to update
+            
+        Returns:
+            bool: True if all updates were successful, False otherwise
+        """
+        if not receipts or len(receipts) == 0:
+            logging.warning("No receipts provided to update")
+            return False
+            
+        success_count = 0
+        total_count = len(receipts)
+        
+        try:
+            # Connect with explicit parameters
+            with psycopg2.connect(
+                host=self.config['host'],
+                database=self.config['database'],
+                user=self.config['user'],
+                password=self.config['password'],
+                port=self.config['port']
+            ) as conn:
+                with conn.cursor() as cursor:
+                    # Process each receipt record
+                    for record in receipts:
+                        estado = record.get('estado')
+                        folio = record.get('folio')
+                        new_id = record.get('id')
+                        response_data = record.get('respuesta')
+                        
+                        if not all([estado, folio, new_id, response_data]):
+                            logging.warning(f"Missing required fields in receipt record: {record}")
+                            continue
+
+                        query = sql.SQL("""
+                            UPDATE recibo_venta 
+                            SET estado = %s, 
+                                respuesta = %s
+                            WHERE folio = %s
+                            RETURNING id_sql
+                        """)
+                        
+                        cursor.execute(query, (estado, response_data, folio))
+                        updated_id = cursor.fetchone()
+                        conn.commit()
+                        
+                        if updated_id:
+                            logging.info(f"Successfully updated receipt status for folio {folio}")
+                            success_count += 1
+                        else:
+                            logging.warning(f"No receipt record found for folio {folio}")
+                    
+                    return success_count == total_count  # Return True only if all updates succeeded
+                        
+        except Exception as e:
+            logging.error(f"response_tracking :: Error updating receipt statuses: {e}")
             return False

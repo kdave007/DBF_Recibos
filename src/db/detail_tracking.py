@@ -161,16 +161,18 @@ class DetailTracking:
                     try:
                         with conn.cursor() as cursor:
 
-                            delete_query = "DELETE FROM detalle_estado WHERE id = %s AND folio = %s AND indice = %s"
-                            cursor.execute(delete_query, (detail_id, detail.get('folio'), detail.get('indice') ))
-                            deleted_count += cursor.rowcount
-                            print(f"Deleted {cursor.rowcount} existing records for ID {detail_id}")
-
-                            # Insert query
-                            insert_query = """
+                            # Upsert query - insert if not exists, update if exists based on folio and indice
+                            upsert_query = """
                                 INSERT INTO detalle_estado (
                                     id, folio, hash_detalle, fecha, estado, accion, ref, indice
                                 ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                                ON CONFLICT (folio, indice) DO UPDATE SET
+                                    id = EXCLUDED.id,
+                                    hash_detalle = EXCLUDED.hash_detalle,
+                                    fecha = EXCLUDED.fecha,
+                                    estado = EXCLUDED.estado,
+                                    accion = EXCLUDED.accion,
+                                    ref = EXCLUDED.ref
                             """
                             params = (
                                     detail_id,  # Use the actual ID from the API
@@ -183,7 +185,7 @@ class DetailTracking:
                                     detail.get('indice')
                                 )
 
-                            cursor.execute(insert_query, params)
+                            cursor.execute(upsert_query, params)
                             inserted_count += 1
 
                             print(f'detail_tracking :: INSERT REPLACE: ID={detail_id}, FOLIO={detail.get('folio')}, HASH={detail.get('detail_hash')}, '

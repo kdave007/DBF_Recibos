@@ -112,7 +112,7 @@ class APIResponseTracking:
         """
         receipts = records.get('recibos')
         if receipts:
-            return self.resp_receipt_tracking.batch_replace_by_id(receipts)
+            return self.resp_receipt_tracking(receipts)
         return False
             
 
@@ -185,7 +185,7 @@ class APIResponseTracking:
                     item.get('id')
                 )
                 
-    def _pa_completed(self, id):
+    def _head_completed(self, record):
         """Update record status to indicate that all details have been processed
         
         Args:
@@ -194,12 +194,44 @@ class APIResponseTracking:
         Returns:
             bool: True if the update was successful, False otherwise
         """
-        action = 'procesado'
-        estado = 'pa_completado'
+
+        estado = record.get('estado')
+        action = record.get('accion')
+        folio = record.get('folio')
+        new_id = record.get('id')
         
         print(f"Updating record {id} to status: {estado}, action: {action}")
         
-        return self.resp_tracking.update_record_status(id, estado, action)
+        return self.resp_tracking.update_head_status(folio, new_id, estado, action)
+
+    def _detail_completed(self, records):
+        """Update record status to indicate that all details have been processed
+        
+        Args:
+            id: The ID of the record to update
+            
+        Returns:
+            bool: True if the update was successful, False otherwise
+        """
+  
+        details = records.get('partidas')    
+        
+        return self.resp_tracking.update_detail_status(details)
+
+    def _receipt_completed(self, records):
+        """Update record status to indicate that all details have been processed
+        
+        Args:
+            id: The ID of the record to update
+            
+        Returns:
+            bool: True if the update was successful, False otherwise
+        """
+        
+        receipts = records.get('recibos')   
+        
+        return self.resp_tracking.update_receipt_status(receipts)
+
 
     def update_create_details(self, records):
         """
