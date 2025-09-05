@@ -77,8 +77,6 @@ class OP:
 
             print(f"waiting line result : {waiting_line_result}")
 
-            # sys.exit()
-            
             # Check if the first request was successful
             if waiting_line_result['success']:
                 total_successfull_op += 1
@@ -182,6 +180,8 @@ class OP:
                     receipts_result = self.api_track._receipt_completed(results['success'][0])
                     print(f"Receipts processing result: {receipts_result}")
                     logging.info(f"insertion sql receipts success: {receipts_result}")
+
+                    self._retry_completed(record)
             
             else :
                 print(f"Failed to process GET request for folio: {folio}")
@@ -191,6 +191,10 @@ class OP:
                 if results.get('failed') and len(results['failed']) > 0:
                     # Use double quotes for outer string and ensure safe access to json_resp
                     logging.info(f"Response when error happened :: {results['failed'][0].get('json_resp', 'No JSON response available')}")
+                
+                self._retry_tracker(record)
+
+                continue
             
 
         return {'success' : total_successfull_op, 'failed' : total_failed_op}

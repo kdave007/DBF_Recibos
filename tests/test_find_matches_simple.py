@@ -51,6 +51,7 @@ def main():
     logging.info(f" STOP_SCRIPT : {env.get('STOP_SCRIPT', 'False')} ")
     logging.info(f" DEBUG_MODE : {env.get('DEBUG_MODE', 'False')} ")
     logging.info(f" SQL_ENABLED : {env.get('SQL_ENABLED', 'False')} ")
+    logging.info(f" API_GET_URL : {env.get('API_GET_URL')} ")
     
     # # Print all environment variables for debugging
     # logging.info("All environment variables from encrypted file:")

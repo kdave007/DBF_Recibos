@@ -68,9 +68,9 @@ class PendingRecordsController:
             # Extract store from folio or use a default
             store = self.env.get("CLAVE_SUCURSAL")
 
-            # Extract just the year from the fecha_emision date object
+            # Format the date as YYYY-MM-DD
             fecha_emision = record.get('fecha_emision')
-            formatted_record['ejer'] = fecha_emision.year if hasattr(fecha_emision, 'year') else None
+            formatted_record['fecha'] = fecha_emision.strftime('%Y-%m-%d') if hasattr(fecha_emision, 'strftime') else None
             
             # Get serie from velneo mappings
             formatted_record['serie'] = self.velneo_mappings.get_from_general_serie(store)

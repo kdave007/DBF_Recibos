@@ -10,7 +10,7 @@ class GetPendingReq:
 
     def __init__(self):
         self.env = EncEnv()
-        self.base_endpoint = self.env.get("API_BASE_URL")# THIS MUST BE A NEW URL
+        self.get_endpoint= self.env.get("API_GET_URL")# THIS MUST BE A NEW URL
         self.api = self.env.get("API_KEY")
         self.DEBUG_MODE = self.env.get('DEBUG_MODE', 'True').lower() == 'true'
 
@@ -35,23 +35,19 @@ class GetPendingReq:
         waiting_id = record.get('id')
         folio = record.get('num_doc')
         serie = record.get('serie')
-        ejer = record.get('ejer')
+        fecha = record.get('fecha')
         
         # Construct URL with query parameters
 
-        # url = f"{self.base_endpoint}?api_key={self.api}&params[NUM_DOC]={folio}&params[SER]={serie}&params[FCH]={ejer}"
-        url = f"https://c8.velneo.com:17262/api/vLatamERP_db_dat/v2/_process/PRO_VTA_FAC_JSON?api_key={self.api}&params[NUM_DOC]={folio}&params[SER]={serie}&params[FCH]={ejer}-05-16"
+        url = f"{self.get_endpoint}?api_key={self.api}&params[NUM_DOC]={folio}&params[SER]={serie}&params[FCH]={fecha}"
+        # url = f"https://c8.velneo.com:17262/api/vLatamERP_db_dat/v2/_process/PRO_VTA_FAC_JSON?api_key={self.api}&params[NUM_DOC]={folio}&params[SER]={serie}&params[FCH]={fecha}-05-16"
         # Log the request
         print(f"Making GET request to: {url}")
         logging.info(f"GET REQUEST for FOLIO {folio} ")
-        logging.info(f"waiting ID : {waiting_id} - serie {serie} - ejer {ejer}")
+        logging.info(f"waiting ID : {waiting_id} - serie {serie} - fecha {fecha}")
 
         if self.DEBUG_MODE:
             logging.info("DEBUG MODE ON :: Response simulated ")
-
-            #DELETE THIS LINE -------------------------------------------------------------------
-            # record['total_recibos'] = 2
-            #------------------------------------------------------------------------------------
 
             status_code, response_json = ResponseSimulator.simulate_response(record, folio)
             response = ResponseSimulator.create_mock_response(status_code, response_json)  
@@ -65,13 +61,43 @@ class GetPendingReq:
                 error_msg = f"get_pendings_req :: Request timed out after 60 seconds for folio {folio}"
                 logging.error(error_msg)
                 print(error_msg)
-                raise TimeoutError(error_msg)
+                # Return a failed result instead of raising an exception
+                return {
+                    'success': [],
+                    'failed': [{
+                        'folio': folio,
+                        'error_msg': error_msg,
+                        'json_resp': None
+                    }]
+                }
 
             except requests.exceptions.ConnectionError as e:
                 error_msg = f"get_pendings_req :: Connection error for folio {folio}: {str(e)}"
                 logging.error(error_msg)
                 print(error_msg)
-                raise ConnectionError(error_msg)
+                # Return a failed result instead of raising an exception
+                return {
+                    'success': [],
+                    'failed': [{
+                        'folio': folio,
+                        'error_msg': error_msg,
+                        'json_resp': None
+                    }]
+                }
+                
+            except Exception as e:
+                error_msg = f"get_pendings_req :: Unexpected error for folio {folio}: {str(e)}"
+                logging.error(error_msg)
+                print(error_msg)
+                # Return a failed result instead of raising an exception
+                return {
+                    'success': [],
+                    'failed': [{
+                        'folio': folio,
+                        'error_msg': error_msg,
+                        'json_resp': None
+                    }]
+                }
         
         print(f"Response Status Code for folio {folio}: {response.status_code}")
         print(f"Response Headers for folio {folio}: {response.headers}")
