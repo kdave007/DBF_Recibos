@@ -17,39 +17,6 @@ class APIResponseTracking:
         self.resp_detail_tracking = DetailTracking(self.db_config)
         self.resp_receipt_tracking = ReceiptTracking(self.db_config)
 
-    # def update_tracker(self, responses_status):
-
-    #     status_create = self._create_op(responses_status['create'])
-    #     print(f'status_create: {status_create}')
-    #     status_update = self._update_op(responses_status['update'])
-    #     print(f'status_update: {status_update}')
-    #     status_delete = self._delete_op(responses_status['delete'])
-    #     print(f'status_delete: {status_delete}')
-
-    #     next_step = False
-        
-    #     if status_create['execute']:
-    #         if status_create['done']:
-    #             next_step = True
-    #         else:
-    #             return False
-
-    #     if status_update['execute']:
-    #         if status_update['done']:
-    #             next_step = True
-    #         else:
-    #             return False
-
-    #     if status_delete['execute']:
-    #         if status_delete['done']:
-    #             next_step = True
-    #         else:
-    #             return False
-    #     print(f'CHECK ')
-    #     return next_step
-
-
-
     def _create_op(self, item):
         action = item.get('accion')
         estado = item.get('estado')

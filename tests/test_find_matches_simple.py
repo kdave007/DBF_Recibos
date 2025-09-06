@@ -17,7 +17,7 @@ log_file = setup_logging()
 # Use logging instead of print for the decorative message
 border = "*" * 80
 spacing = "*" + " " * 78 + "*"
-message = "*" + " " * 25 + "STARTING SCRIPT EXECUTION v 1.25" + " " * 25 + "*"
+message = "*" + " " * 25 + "STARTING SCRIPT EXECUTION v 1.3" + " " * 25 + "*"
 
 logging.info(border)
 logging.info(spacing)
@@ -66,8 +66,6 @@ def main():
         sys.exit(1)
 
     logging.info(f"CLAVE_SUCURSAL : {store}.")
-
-
 
     #internet validation
 
