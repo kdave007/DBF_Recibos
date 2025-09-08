@@ -141,7 +141,7 @@ class OP:
         total_successfull_op = 0
         total_failed_op = 0
         
-        pendings = self.pending_records.get_pending_records()
+        pendings = self.pending_records.get_pending_records('FA')
 
         print(f'pendings {pendings}')
 

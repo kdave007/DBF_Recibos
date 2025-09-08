@@ -298,7 +298,7 @@ class DetailTracking:
                                 
                                 # Debug print
                                 # logging.warning(f'////// /////// //////CHECKING FOR BUG DUPLICATE ID...')
-                                logging.info(f'detail_tracking :: INSERT REPLACE: ID={detail_id}, FOLIO={folio}, HASH={detail_hash}, '
+                                logging.info(f'detail_tracking :: insert_details_on_wait: ID={detail_id}, FOLIO={folio}, HASH={detail_hash}, '
                                        f'FECHA={fecha}, ESTADO={estado}, ACCION={action}, REF={ref_value}')
                                 
                                 cursor.execute(insert_query, params)

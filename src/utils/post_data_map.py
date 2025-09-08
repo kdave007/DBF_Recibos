@@ -65,25 +65,6 @@ class DataMap:
         except Exception as e:
             logging.error(f"Error mapping metodo_pago with ref {ref}: {e}")
             return None
-            
-    def apply_map_metodo_fpg_v(self, ref: str) -> Optional[int]:
-        """Get the Velneo ID for metodo_pago from the database
-        
-        Args:
-            ref: The reference code from the DBF record
-            
-        Returns:
-            int: The mapped Velneo ID or None if not found
-        """
-        if not ref:
-            return None
-            
-        try:
-            return self.velneo_mappings.get_metodo_fpg_V(ref)
-        except Exception as e:
-            logging.error(f"Error mapping metodo_pago with ref {ref}: {e}")
-            return None
-
 
     def apply_map_vendedor(self, ref: str) -> Optional[int]:
         """Get the Velneo ID for vendedor from the database
@@ -253,23 +234,6 @@ class DataMap:
             logging.error(f"Error mapping caja banco with ref {ref}: {e}")
             return None
 
-    def apply_map_cja_bco_v(self, ref: str) -> Optional[int]:
-        """Get the Velneo ID for caja_banco from the database
-        
-        Args:
-            ref: The reference code from the DBF record
-            
-        Returns:
-            int: The mapped Velneo ID or None if not found
-        """
-        if not ref:
-            return None
-            
-        try:
-            return self.velneo_mappings.get_cja_bco_v(ref)
-        except Exception as e:
-            logging.error(f"Error mapping caja banco with ref {ref}: {e}")
-            return None
     
     def apply_map_forma_pago(self, ref: str) -> Optional[int]:
         """Get the Velneo ID for forma_pago from the database
@@ -326,7 +290,41 @@ class DataMap:
             logging.error(f"Error mapping forma pago x caja banco with ref {ref}: {e}")
             return None
     
+    def apply_map_cja_bco_v(self, ref: str) -> Optional[int]:
+        """Get the Velneo ID for caja_banco from the database
+        
+        Args:
+            ref: The reference code from the DBF record
+            
+        Returns:
+            int: The mapped Velneo ID or None if not found
+        """
+        if not ref:
+            return None
+            
+        try:
+            return self.velneo_mappings.get_cja_bco_v(ref)
+        except Exception as e:
+            logging.error(f"Error mapping caja banco with ref {ref}: {e}")
+            return None
     
+    def apply_map_metodo_fpg_v(self, ref: str) -> Optional[int]:
+        """Get the Velneo ID for metodo_pago from the database
+        
+        Args:
+            ref: The reference code from the DBF record
+            
+        Returns:
+            int: The mapped Velneo ID or None if not found
+        """
+        if not ref:
+            return None
+            
+        try:
+            return self.velneo_mappings.get_metodo_fpg_V(ref)
+        except Exception as e:
+            logging.error(f"Error mapping metodo_pago with ref {ref}: {e}")
+            return None
     
     def process_record_fac(self, record: Dict[str, Any], store, plaza) -> Dict[str, Any]:
         """Process a complete record by applying all relevant mappings

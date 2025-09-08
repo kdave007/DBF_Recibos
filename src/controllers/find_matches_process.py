@@ -62,7 +62,7 @@ class MatchesProcess:
         print(f"\n=== db_map_implementations completed in {db_map_time:.2f} seconds ===")
         
         # Obtener registros SQL
-        sql_records = self.get_sql_data(start_date, end_date)
+        sql_records = self.get_sql_data(start_date, end_date, 'FA')
         
         if not sql_records:
             print(f"No hay registros en SQL entre {start_date} y {end_date}. Insertando nuevos registros")
@@ -77,13 +77,7 @@ class MatchesProcess:
 
         self.dischard_by_retries(comparison_result, start_date, end_date)
 
-        # print('STOP')
-        # sys.exit()
-
-
-        
-        
-        
+   
         # Return the full result for programmatic use
         return comparison_result
                 
@@ -128,7 +122,7 @@ class MatchesProcess:
             'record_count': len(data)
         }
 
-    def get_sql_data(self, start_date, end_date):
+    def get_sql_data(self, start_date, end_date, tipo_doc):
         """Obtiene datos SQL para comparación"""
         from src.db.postgres_tracking import PostgresTracking
         
@@ -136,7 +130,7 @@ class MatchesProcess:
         db_config = PostgresConnection.get_db_config()
         
         tracker = PostgresTracking(db_config)
-        return tracker.get_records_by_date_range(start_date, end_date)
+        return tracker.get_records_by_date_range(start_date, end_date, tipo_doc)
 
 
     # The insert_process method has been moved to the InsertionProcess class
