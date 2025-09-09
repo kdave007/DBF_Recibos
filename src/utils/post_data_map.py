@@ -345,7 +345,7 @@ class DataMap:
 
         # result['fpg'] = self.apply_map_metodo_pago(record['fpg'])
             
-        result['fpg'] = self.apply_map_metodo_fpg_v(record['fpg_v'])
+        result['fpg'] = self.apply_map_metodo_fpg_v(record['fpg'])
             
         result['cmr'] = self.apply_map_vendedor(1)
             
