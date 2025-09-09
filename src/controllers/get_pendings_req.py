@@ -55,7 +55,7 @@ class GetPendingReq:
         else:  
             # Make the GET request
             try:
-                response = requests.get(url, headers=headers, timeout=60)
+                response = requests.get(url, headers=headers, timeout=60, verify=False)
 
             except requests.exceptions.Timeout:
                 error_msg = f"get_pendings_req :: Request timed out after 60 seconds for folio {folio}"

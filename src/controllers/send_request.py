@@ -152,8 +152,10 @@ class SendRequest:
                         f"{base_url}?api_key={api_key}", 
                         headers=headers,
                         data=post_data,
-                        timeout=60  # Set timeout to 60 seconds
+                        timeout=60,  # Set timeout to 60 seconds
+                        verify=False  # Disable SSL certificate verification
                     )
+                    # Warning: verify=False disables SSL certificate verification, which is not recommended for production
                 except requests.exceptions.Timeout:
                     error_msg = f"Request timed out after 60 seconds for folio {folio}"
                     logging.error(error_msg)

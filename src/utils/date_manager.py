@@ -29,19 +29,26 @@ class DateManager:
             start_str = self.env.get('START')
             end_str = self.env.get('END')
             
-            if start_str and end_str:
+            # Check if start_str exists
+            if start_str:
                 try:
-                    # Parse date in format DD/MMYYYY
+                    # Parse start date in format DD/MMYYYY
                     start_day = int(start_str[:2])
                     start_month = int(start_str[3:5])
                     start_year = int(start_str[5:])
                     
+                    # Create start date object
+                    start_date = date(start_year, start_month, start_day)
+                    
+                    # If end_str is False, 0, or empty, use today's date as end_date
+                    if not end_str or end_str == '0' or end_str.lower() == 'false':
+                        end_date = date.today()
+                        return start_date, end_date
+                    
+                    # Otherwise, parse the end date as normal
                     end_day = int(end_str[:2])
                     end_month = int(end_str[3:5])
                     end_year = int(end_str[5:])
-                    
-                    # Create date objects in format date(year, month, day)
-                    start_date = date(start_year, start_month, start_day)
                     end_date = date(end_year, end_month, end_day)
                     
                     return start_date, end_date
