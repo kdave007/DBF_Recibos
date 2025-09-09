@@ -1,5 +1,6 @@
 import clr
 import json
+import logging
 from typing import List, Dict, Any, Optional
 from pathlib import Path
 
@@ -15,6 +16,8 @@ class DBFReader:
             data_source: Path to the DBF file
             encryption_password: Password for encrypted DBF
         """
+        # Log the data source path being used
+        logging.info(f"Initializing DBFReader with data source: {data_source}")
         self.connection = DBFConnection(data_source, encryption_password)
         self.converter = DataConverter()
 

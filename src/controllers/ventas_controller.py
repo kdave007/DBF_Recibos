@@ -3,12 +3,14 @@ import logging
 from typing import Dict, Any, List
 import json
 import time
+import os
+import sys
+from pathlib import Path
 from ..dbf_enc_reader.core import DBFReader
 from ..dbf_enc_reader.connection import DBFConnection
 from ..dbf_enc_reader.mapping_manager import MappingManager
 from ..config.dbf_config import DBFConfig
-import os
-import sys
+from ..utils.get_enc import EncEnv
 
 class VentasController:
     def __init__(self, mapping_manager: MappingManager, config: DBFConfig):
@@ -23,6 +25,17 @@ class VentasController:
         self.venta_dbf = "VENTA.DBF"  # Header table
         self.partvta_dbf = "PARTVTA.DBF"  # Details table
        
+        # Log the DLL path and source directory
+        logging.info(f"VentasController using DLL path: {self.config.dll_path}")
+        logging.info(f"VentasController using source directory: {self.config.source_directory}")
+        
+        # Check if the DBF files exist in the source directory
+        venta_path = os.path.join(self.config.source_directory, self.venta_dbf)
+        partvta_path = os.path.join(self.config.source_directory, self.partvta_dbf)
+        
+        logging.info(f"Checking if DBF files exist:")
+        logging.info(f"  - {venta_path} (exists: {os.path.exists(venta_path)})")
+        logging.info(f"  - {partvta_path} (exists: {os.path.exists(partvta_path)})")
         
         # Initialize DBF reader
         DBFConnection.set_dll_path(self.config.dll_path)
