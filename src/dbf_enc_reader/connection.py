@@ -39,19 +39,19 @@ class DBFConnection:
         dll_paths_to_try.append(os.path.join(os.getcwd(), dll_filename))
         
         # Log all paths we're going to try
-        logging.info(f"Attempting to load DLL from multiple locations:")
-        for p in dll_paths_to_try:
-            logging.info(f"  - {p} (exists: {os.path.exists(p)})")
+        # logging.info(f"Attempting to load DLL from multiple locations:")
+        # for p in dll_paths_to_try:
+        #     logging.info(f"  - {p} (exists: {os.path.exists(p)})")
         
         # Try each path until one works
         errors = []
         for dll_path in dll_paths_to_try:
             try:
                 if os.path.exists(dll_path):
-                    logging.info(f"Trying to load DLL from: {dll_path}")
+                    # logging.info(f"Trying to load DLL from: {dll_path}")
                     clr.AddReference(dll_path)
                     cls._dll_loaded = True
-                    logging.info(f"Successfully loaded DLL from: {dll_path}")
+                    # logging.info(f"Successfully loaded DLL from: {dll_path}")
                     return
                 else:
                     errors.append(f"Path does not exist: {dll_path}")
@@ -81,7 +81,7 @@ class DBFConnection:
         """
         # Use the data source path directly without resolving it
         self.data_source = data_source
-        logging.info(f"Using data source path: {self.data_source}")
+        # logging.info(f"Using data source path: {self.data_source}")
         
         env = EncEnv()
         # Check if encryption is enabled via environment variable
@@ -107,27 +107,27 @@ class DBFConnection:
             alt_paths.append(os.path.join(os.getcwd(), os.path.basename(self.data_source)))
             
             # Log all alternative paths
-            logging.info(f"Checking alternative data source paths:")
-            for p in alt_paths:
-                logging.info(f"  - {p} (exists: {os.path.exists(p)})")
+            # logging.info(f"Checking alternative data source paths:")
+            # for p in alt_paths:
+            #     logging.info(f"  - {p} (exists: {os.path.exists(p)})")
             
             # Use the first path that exists
             for path in alt_paths:
                 if os.path.exists(path):
                     self.data_source = path
-                    logging.info(f"Using alternative data source path: {self.data_source}")
+                    # logging.info(f"Using alternative data source path: {self.data_source}")
                     break
         
         # Print the data source path before using it
-        print(f"\n[DBFConnection] ABOUT TO USE DATA SOURCE: {self.data_source}")
-        print(f"[DBFConnection] DATA SOURCE EXISTS: {os.path.exists(self.data_source)}")
+        # print(f"\n[DBFConnection] ABOUT TO USE DATA SOURCE: {self.data_source}")
+        # print(f"[DBFConnection] DATA SOURCE EXISTS: {os.path.exists(self.data_source)}")
         
         # If it's a directory, check if the DBF files exist
         if os.path.isdir(self.data_source):
             venta_path = os.path.join(self.data_source, "VENTA.DBF")
             partvta_path = os.path.join(self.data_source, "PARTVTA.DBF")
-            print(f"[DBFConnection] VENTA.DBF exists: {os.path.exists(venta_path)}")
-            print(f"[DBFConnection] PARTVTA.DBF exists: {os.path.exists(partvta_path)}")
+            # print(f"[DBFConnection] VENTA.DBF exists: {os.path.exists(venta_path)}")
+            # print(f"[DBFConnection] PARTVTA.DBF exists: {os.path.exists(partvta_path)}")
         
         # Build connection string with or without encryption password based on ENCRYPTED flag
         connection_parts = [
@@ -139,15 +139,15 @@ class DBFConnection:
         
         # Log the full connection string (without password)
         connection_string_safe = f"data source={self.data_source}; ServerType=LOCAL; TableType=CDX; Shared=TRUE;"
-        print(f"[DBFConnection] Connection string: {connection_string_safe}")
-        logging.info(f"[DBFConnection] Connection string: {connection_string_safe}")
+        # print(f"[DBFConnection] Connection string: {connection_string_safe}")
+        # logging.info(f"[DBFConnection] Connection string: {connection_string_safe}")
         
         # Only add encryption password if ENCRYPTED flag is True
         if encrypted:
             connection_parts.append(f"EncryptionPassword={encryption_password};")
             
         self.connection_string = "".join(connection_parts)
-        print(f"Debug - Connection string: {self.connection_string}")
+        # print(f"Debug - Connection string: {self.connection_string}")
         self.conn: Optional[AdsConnection] = None
         self.reader = None
 

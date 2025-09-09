@@ -26,16 +26,16 @@ class VentasController:
         self.partvta_dbf = "PARTVTA.DBF"  # Details table
        
         # Log the DLL path and source directory
-        logging.info(f"VentasController using DLL path: {self.config.dll_path}")
-        logging.info(f"VentasController using source directory: {self.config.source_directory}")
+        # logging.info(f"VentasController using DLL path: {self.config.dll_path}")
+        # logging.info(f"VentasController using source directory: {self.config.source_directory}")
         
         # Check if the DBF files exist in the source directory
         venta_path = os.path.join(self.config.source_directory, self.venta_dbf)
         partvta_path = os.path.join(self.config.source_directory, self.partvta_dbf)
         
-        logging.info(f"Checking if DBF files exist:")
-        logging.info(f"  - {venta_path} (exists: {os.path.exists(venta_path)})")
-        logging.info(f"  - {partvta_path} (exists: {os.path.exists(partvta_path)})")
+        # logging.info(f"Checking if DBF files exist:")
+        # logging.info(f"  - {venta_path} (exists: {os.path.exists(venta_path)})")
+        # logging.info(f"  - {partvta_path} (exists: {os.path.exists(partvta_path)})")
         
         # Initialize DBF reader
         DBFConnection.set_dll_path(self.config.dll_path)
@@ -72,7 +72,7 @@ class VentasController:
         # Then get details only for these folios
         details_start = time.time()
 
-        logging.info(f'/// /// /// Total cabeceras found: {len(headers)}')
+        # logging.info(f'/// /// /// Total cabeceras found: {len(headers)}')
 
         details_by_folio = self._get_details_for_folios(folios) if folios else {}
         receipts_by_ref = self._get_receipts_for_folios(receipts_num, start_date, end_date) if receipts_num else {}
@@ -132,7 +132,7 @@ class VentasController:
         parse_start = time.time()
 
         raw_data = json.loads(raw_data_str)
-        logging.info(f'/// /// /// Total detalles found: {len(raw_data)}')
+        # logging.info(f'/// /// /// Total detalles found: {len(raw_data)}')
         
         
         parse_time = time.time() - parse_start
@@ -202,7 +202,7 @@ class VentasController:
         # Combine the data from both tables
         raw_data = raw_data_1 + raw_data_2
 
-        logging.info(f'/// /// /// Total recibos found: {len(raw_data)}')
+        # logging.info(f'/// /// /// Total recibos found: {len(raw_data)}')
         
         print(f"Records from {target_table}: {len(raw_data_1)}")
         print(f"Records from {target_table_2}: {len(raw_data_2)}")

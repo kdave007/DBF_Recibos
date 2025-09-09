@@ -29,26 +29,27 @@ class EncEnv:
             self.env_paths.append(os.path.join(sys._MEIPASS, '.env'))
         
         # Log all paths we're considering
-        print("\n[EncEnv] Looking for .env file in multiple locations:")
+        # print("\n[EncEnv] Looking for .env file in multiple locations:")
         for p in self.env_paths:
             exists = os.path.exists(p)
-            print(f"  - {p} (exists: {exists})")
-            logging.info(f"[EncEnv] .env path: {p} (exists: {exists})")
+            # print(f"  - {p} (exists: {exists})")
+            # logging.info(f"[EncEnv] .env path: {p} (exists: {exists})")
             
             # If we find a valid .env file, print its contents for debugging
             if exists:
                 try:
                     with open(p, 'r') as f:
                         content = f.read()
-                        print(f"\n[EncEnv] Found .env file at {p}")
-                        print("[EncEnv] First few lines:")
-                        lines = content.split('\n')[:5]  # Print first 5 lines
-                        for line in lines:
-                            if not any(secret in line.lower() for secret in ['password', 'secret', 'key']):
-                                print(f"  {line}")
-                        print("...")
+                        # print(f"\n[EncEnv] Found .env file at {p}")
+                        # print("[EncEnv] First few lines:")
+                        # lines = content.split('\n')[:5]  # Print first 5 lines
+                        # for line in lines:
+                        #     if not any(secret in line.lower() for secret in ['password', 'secret', 'key']):
+                        #         print(f" a")
+                        # print("...")
                 except Exception as e:
                     print(f"[EncEnv] Error reading .env file: {e}")
+
                     
                 # Break after finding the first valid .env file
                 break

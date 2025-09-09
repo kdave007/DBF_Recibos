@@ -32,15 +32,15 @@ class DBFConfig:
         if not source_directory_value:
             raise ValueError("source_directory is required. Set it directly or via DBF_SOURCE_DIR in .env")
             
-        logging.info("DBFConfig initialized - will use values directly from .env file")
+        # logging.info("DBFConfig initialized - will use values directly from .env file")
     
     @property
     def dll_path(self):
         """Get the DLL path directly from .env each time"""
         env = EncEnv()
         path = self._dll_path_override or env.get('DBF_DLL_PATH')
-        print(f"[DBFConfig] Using DLL path: {path}")
-        logging.info(f"[DBFConfig] Using DLL path: {path}")
+        # print(f"[DBFConfig] Using DLL path: {path}")
+        # logging.info(f"[DBFConfig] Using DLL path: {path}")
         return path
         
     @property
@@ -49,8 +49,8 @@ class DBFConfig:
         env = EncEnv()
         password = self._encryption_password_override or env.get('DBF_ENCRYPTION_PASSWORD')
         # Don't print the actual password for security reasons
-        print(f"[DBFConfig] Using encryption password from .env")
-        logging.info(f"[DBFConfig] Using encryption password from .env")
+        # print(f"[DBFConfig] Using encryption password from .env")
+        # logging.info(f"[DBFConfig] Using encryption password from .env")
         return password
         
     @property
@@ -58,8 +58,8 @@ class DBFConfig:
         """Get the source directory directly from .env each time"""
         env = EncEnv()
         path = self._source_directory_override or env.get('DBF_SOURCE_DIR')
-        print(f"[DBFConfig] Using source directory: {path}")
-        logging.info(f"[DBFConfig] Using source directory: {path}")
+        # print(f"[DBFConfig] Using source directory: {path}")
+        # logging.info(f"[DBFConfig] Using source directory: {path}")
         return path
         
     def get_table_path(self, table_name: str) -> str:
@@ -78,9 +78,9 @@ class DBFConfig:
         full_path = os.path.join(source_dir, table_name)
         
         # Print the full path and check if it exists
-        print(f"[DBFConfig] Table path for {table_name}: {full_path}")
-        print(f"[DBFConfig] Table file exists: {os.path.exists(full_path)}")
-        logging.info(f"[DBFConfig] Table path for {table_name}: {full_path}")
-        logging.info(f"[DBFConfig] Table file exists: {os.path.exists(full_path)}")
+        # print(f"[DBFConfig] Table path for {table_name}: {full_path}")
+        # print(f"[DBFConfig] Table file exists: {os.path.exists(full_path)}")
+        # logging.info(f"[DBFConfig] Table path for {table_name}: {full_path}")
+        # logging.info(f"[DBFConfig] Table file exists: {os.path.exists(full_path)}")
         
         return full_path
