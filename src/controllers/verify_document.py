@@ -5,7 +5,7 @@ import logging
 class VerifyDocument:
 
    def isReady(self, record):
-      logging.info(f'Validating record: {record.get("folio", "unknown")}')
+      logging.info(f'Validating record: {record}')
       
       # Check header fields
       if not self.check_header(record):
@@ -29,7 +29,7 @@ class VerifyDocument:
       # Check if emp exists and is not empty or just whitespace
       emp = record.get('emp')
       if emp is None or emp.strip() == "":
-         logging.error(f"verify document :: 'emp' field is missing or empty in record")
+         logging.error(f"verify document :: 'emp' field is missing or empty in record {record.get('emp')}")
          return False
       
       # Check emp_div field

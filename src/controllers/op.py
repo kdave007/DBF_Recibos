@@ -73,9 +73,9 @@ class OP:
         for record in records:
             print(f'RECORD FOUND {record}')
             print(f'------')
-
-            self.verify.isReady(record)
-            sys.exit()
+             
+            # self.verify.isReady(record.get('dbf_record', {}))
+            # sys.exit()
             if not self.verify.isReady(record):
                 total_failed_op += 1
                 logging.info(f"operation skipping folio : {record.get('folio')}")
