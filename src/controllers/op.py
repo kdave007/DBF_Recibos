@@ -15,6 +15,7 @@ from dotenv import load_dotenv
 from src.utils.get_enc import EncEnv
 from src.controllers.pending_records_controller import PendingRecordsController
 from src.controllers.get_pendings_req import GetPendingReq
+from src.controllers.verify_document import VerifyDocument
 
 # Load environment variables
 load_dotenv()
@@ -31,6 +32,7 @@ class OP:
         self.env = EncEnv()
         self.pending_records = PendingRecordsController(self.db_config)
         self.get_pending = GetPendingReq()
+        self.verify = VerifyDocument()
         self.sql_enabled = self.env.get('SQL_ENABLED', 'True').lower() == 'true'
 
         self.bypass_ca = False
@@ -71,8 +73,15 @@ class OP:
         for record in records:
             print(f'RECORD FOUND {record}')
             print(f'------')
-      
-                # Make the first API call
+
+            self.verify.isReady(record)
+            sys.exit()
+            if not self.verify.isReady(record):
+                total_failed_op += 1
+                logging.info(f"operation skipping folio : {record.get('folio')}")
+                continue
+            
+            # Make the first API call
             waiting_line_result = self.send_req.waiting_line(record, base_url, api_key)
 
             # print(f"waiting line result : {waiting_line_result}")
