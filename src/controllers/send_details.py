@@ -1,5 +1,5 @@
 import psycopg2
-from psycopg2 import sql
+
 from datetime import datetime, date
 from typing import List, Dict, Optional
 import logging

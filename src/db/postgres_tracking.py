@@ -1,404 +1,404 @@
-import sqlite3
-from datetime import datetime, date
-from typing import List, Dict, Optional
-import logging
-import pytz
+# import sqlite3
+# from datetime import datetime, date
+# from typing import List, Dict, Optional
+# import logging
+# import pytz
 
-class PostgresTracking:
-    """Sistema de seguimiento para estado_factura_venta"""
+# class PostgresTracking:
+#     """Sistema de seguimiento para estado_factura_venta"""
     
-    def __init__(self, db_config: dict):
-        self.config = db_config
+#     def __init__(self, db_config: dict):
+#         self.config = db_config
     
-    def get_by_lote(self, id_lote: str = None, limit: int = 100) -> List[Dict]:
-        """Obtiene estados de facturas"""
-        try:
-            # Connect with explicit parameters instead of using **
-            with psycopg2.connect(
-                host=self.config['host'],
-                database=self.config['database'],
-                user=self.config['user'],
-                password=self.config['password'],
-                port=self.config['port']
-            ) as conn:
-                with conn.cursor() as cursor:
-                    base_query = sql.SQL("""
-                        SELECT id, folio, total_partidas, descripcion, 
-                               hash, fecha_procesamiento, id_lote, estado, fecha_emision, accion
-                        FROM estado_factura_venta
-                    """)
+#     def get_by_lote(self, id_lote: str = None, limit: int = 100) -> List[Dict]:
+#         """Obtiene estados de facturas"""
+#         try:
+#             # Connect with explicit parameters instead of using **
+#             with psycopg2.connect(
+#                 host=self.config['host'],
+#                 database=self.config['database'],
+#                 user=self.config['user'],
+#                 password=self.config['password'],
+#                 port=self.config['port']
+#             ) as conn:
+#                 with conn.cursor() as cursor:
+#                     base_query = sql.SQL("""
+#                         SELECT id, folio, total_partidas, descripcion, 
+#                                hash, fecha_procesamiento, id_lote, estado, fecha_emision, accion
+#                         FROM estado_factura_venta
+#                     """)
                     
-                    if id_lote:
-                        query = base_query + sql.SQL(" WHERE id_lote = %s ORDER BY fecha_procesamiento DESC")
-                        cursor.execute(query, (id_lote,))
-                    else:
-                        query = base_query + sql.SQL(" ORDER BY fecha_procesamiento DESC LIMIT %s")
-                        cursor.execute(query, (limit,))
+#                     if id_lote:
+#                         query = base_query + sql.SQL(" WHERE id_lote = %s ORDER BY fecha_procesamiento DESC")
+#                         cursor.execute(query, (id_lote,))
+#                     else:
+#                         query = base_query + sql.SQL(" ORDER BY fecha_procesamiento DESC LIMIT %s")
+#                         cursor.execute(query, (limit,))
                     
-                    columns = [desc[0] for desc in cursor.description]
-                    return [dict(zip(columns, row)) for row in cursor.fetchall()]
-        except Exception as e:
-            logging.error(f"Error obteniendo estados: {e}")
-            return []
+#                     columns = [desc[0] for desc in cursor.description]
+#                     return [dict(zip(columns, row)) for row in cursor.fetchall()]
+#         except Exception as e:
+#             logging.error(f"Error obteniendo estados: {e}")
+#             return []
     
-    def update_invoice_status(self, 
-                            folio: str, 
-                            total_partidas: int,
-                            descripcion: str,
-                            hash: str,
-                            id_lote: str,
-                            estado: str = 'pendiente',
-                            fecha_emision: date = None) -> bool:
-        """Actualiza o inserta estado de factura"""
-        try:
-            # Connect with explicit parameters instead of using **
-            with psycopg2.connect(
-                host=self.config['host'],
-                database=self.config['database'],
-                user=self.config['user'],
-                password=self.config['password'],
-                port=self.config['port']
-            ) as conn:
-                with conn.cursor() as cursor:
-                    # Solo insert si no existe
-                    query = sql.SQL("""
-                        INSERT INTO estado_factura_venta (
-                            folio, total_partidas, descripcion,
-                            hash, fecha_procesamiento, id_lote, estado, fecha_emision
-                        ) VALUES (%s, %s, %s, %s, %s::date, %s, %s, %s)
-                        ON CONFLICT (folio) DO NOTHING
-                        RETURNING id
-                    """)
+#     def update_invoice_status(self, 
+#                             folio: str, 
+#                             total_partidas: int,
+#                             descripcion: str,
+#                             hash: str,
+#                             id_lote: str,
+#                             estado: str = 'pendiente',
+#                             fecha_emision: date = None) -> bool:
+#         """Actualiza o inserta estado de factura"""
+#         try:
+#             # Connect with explicit parameters instead of using **
+#             with psycopg2.connect(
+#                 host=self.config['host'],
+#                 database=self.config['database'],
+#                 user=self.config['user'],
+#                 password=self.config['password'],
+#                 port=self.config['port']
+#             ) as conn:
+#                 with conn.cursor() as cursor:
+#                     # Solo insert si no existe
+#                     query = sql.SQL("""
+#                         INSERT INTO estado_factura_venta (
+#                             folio, total_partidas, descripcion,
+#                             hash, fecha_procesamiento, id_lote, estado, fecha_emision
+#                         ) VALUES (%s, %s, %s, %s, %s::date, %s, %s, %s)
+#                         ON CONFLICT (folio) DO NOTHING
+#                         RETURNING id
+#                     """)
                     
-                    params = (folio, total_partidas, descripcion, hash, datetime.now().date(), id_lote, estado, fecha_emision)
-                    cursor.execute(query, params)
+#                     params = (folio, total_partidas, descripcion, hash, datetime.now().date(), id_lote, estado, fecha_emision)
+#                     cursor.execute(query, params)
                     
-                    # Si se insertó, retornará el id
-                    if cursor.fetchone():
-                        conn.commit()
-                        return True
-                    return False
-        except Exception as e:
-            logging.error(f"Error insertando estado: {e}")
-            return False
+#                     # Si se insertó, retornará el id
+#                     if cursor.fetchone():
+#                         conn.commit()
+#                         return True
+#                     return False
+#         except Exception as e:
+#             logging.error(f"Error insertando estado: {e}")
+#             return False
             
-    def update_existing_invoice(self,
-                              folio: str,
-                              new_status: str,
-                              new_hash: str = None) -> bool:
-        """Actualiza solo estado y hash de factura existente"""
-        try:
-            # Connect with explicit parameters instead of using **
-            with psycopg2.connect(
-                host=self.config['host'],
-                database=self.config['database'],
-                user=self.config['user'],
-                password=self.config['password'],
-                port=self.config['port']
-            ) as conn:
-                with conn.cursor() as cursor:
-                    if new_hash:
-                        query = sql.SQL("""
-                            UPDATE estado_factura_venta
-                            SET estado = %s,
-                                hash = %s,
-                                fecha_procesamiento = %s
-                            WHERE folio = %s
-                        """)
-                        cursor.execute(query, (new_status, new_hash, datetime.now(pytz.utc), folio))
-                    else:
-                        query = sql.SQL("""
-                            UPDATE estado_factura_venta
-                            SET estado = %s,
-                                fecha_procesamiento = %s
-                            WHERE folio = %s
-                        """)
-                        cursor.execute(query, (new_status, datetime.now(pytz.utc), folio))
+#     def update_existing_invoice(self,
+#                               folio: str,
+#                               new_status: str,
+#                               new_hash: str = None) -> bool:
+#         """Actualiza solo estado y hash de factura existente"""
+#         try:
+#             # Connect with explicit parameters instead of using **
+#             with psycopg2.connect(
+#                 host=self.config['host'],
+#                 database=self.config['database'],
+#                 user=self.config['user'],
+#                 password=self.config['password'],
+#                 port=self.config['port']
+#             ) as conn:
+#                 with conn.cursor() as cursor:
+#                     if new_hash:
+#                         query = sql.SQL("""
+#                             UPDATE estado_factura_venta
+#                             SET estado = %s,
+#                                 hash = %s,
+#                                 fecha_procesamiento = %s
+#                             WHERE folio = %s
+#                         """)
+#                         cursor.execute(query, (new_status, new_hash, datetime.now(pytz.utc), folio))
+#                     else:
+#                         query = sql.SQL("""
+#                             UPDATE estado_factura_venta
+#                             SET estado = %s,
+#                                 fecha_procesamiento = %s
+#                             WHERE folio = %s
+#                         """)
+#                         cursor.execute(query, (new_status, datetime.now(pytz.utc), folio))
                     
-                    conn.commit()
-                    return cursor.rowcount > 0
-        except Exception as e:
-            logging.error(f"Error actualizando estado: {e}")
-            return False
+#                     conn.commit()
+#                     return cursor.rowcount > 0
+#         except Exception as e:
+#             logging.error(f"Error actualizando estado: {e}")
+#             return False
 
-    def get_records_by_date_range(self, start_date: datetime, end_date: datetime, tipo_doc) -> List[Dict]:
-        """
-        Obtiene todos los registros en el rango de fechas
+#     def get_records_by_date_range(self, start_date: datetime, end_date: datetime, tipo_doc) -> List[Dict]:
+#         """
+#         Obtiene todos los registros en el rango de fechas
         
-        Args:
-            start_date: Fecha inicial
-            end_date: Fecha final
+#         Args:
+#             start_date: Fecha inicial
+#             end_date: Fecha final
             
-        Returns:
-            Lista de registros completos en el rango
-        """
-        try:
-            # Connect to SQLite database
-            with sqlite3.connect(self.config['database']) as conn:
-                # Enable dictionary cursor
-                conn.row_factory = sqlite3.Row
-                cursor = conn.cursor()
+#         Returns:
+#             Lista de registros completos en el rango
+#         """
+#         try:
+#             # Connect to SQLite database
+#             with sqlite3.connect(self.config['database']) as conn:
+#                 # Enable dictionary cursor
+#                 conn.row_factory = sqlite3.Row
+#                 cursor = conn.cursor()
                 
-                query = """
-                    SELECT id, folio, total_partidas,
-                           hash, fecha_procesamiento, estado, fecha_emision
-                    FROM estado_factura_venta
-                    WHERE fecha_emision BETWEEN ? AND ? AND tipo_doc = ?
-                    ORDER BY fecha_emision
-                """
+#                 query = """
+#                     SELECT id, folio, total_partidas,
+#                            hash, fecha_procesamiento, estado, fecha_emision
+#                     FROM estado_factura_venta
+#                     WHERE fecha_emision BETWEEN ? AND ? AND tipo_doc = ?
+#                     ORDER BY fecha_emision
+#                 """
                 
-                # Format dates for better debugging output
-                print(f"\nExecuting SQL query with dates: {start_date} to {end_date}")
+#                 # Format dates for better debugging output
+#                 print(f"\nExecuting SQL query with dates: {start_date} to {end_date}")
                 
-                # Convert datetime objects to date objects if needed
-                # This ensures we're only comparing the date part in the query
-                start_date_param = start_date.date() if hasattr(start_date, 'date') else start_date
-                end_date_param = end_date.date() if hasattr(end_date, 'date') else end_date
+#                 # Convert datetime objects to date objects if needed
+#                 # This ensures we're only comparing the date part in the query
+#                 start_date_param = start_date.date() if hasattr(start_date, 'date') else start_date
+#                 end_date_param = end_date.date() if hasattr(end_date, 'date') else end_date
                 
-                cursor.execute(query, (start_date_param, end_date_param, tipo_doc))
+#                 cursor.execute(query, (start_date_param, end_date_param, tipo_doc))
                 
-                if cursor.description:
-                    # With sqlite.Row factory, we can convert rows directly to dict
-                    results = [dict(row) for row in cursor.fetchall()]
+#                 if cursor.description:
+#                     # With sqlite.Row factory, we can convert rows directly to dict
+#                     results = [dict(row) for row in cursor.fetchall()]
                     
-                    print(f"Query found {len(results)} records")
+#                     print(f"Query found {len(results)} records")
                     
-                    # Print sample of results (first 2)
-                    if results:
-                        print("\nSample records:")
-                        for i, record in enumerate(results[:2], 1):
-                            print(f"\nRecord #{i}:")
-                            print(f"Folio: {record.get('folio')}")
-                            print(f"Hash: {record.get('hash')}")
-                            print(f"Fecha: {record.get('fecha_emision')}")
-                    else:
-                        print("No records found in date range")
+#                     # Print sample of results (first 2)
+#                     if results:
+#                         print("\nSample records:")
+#                         for i, record in enumerate(results[:2], 1):
+#                             print(f"\nRecord #{i}:")
+#                             print(f"Folio: {record.get('folio')}")
+#                             print(f"Hash: {record.get('hash')}")
+#                             print(f"Fecha: {record.get('fecha_emision')}")
+#                     else:
+#                         print("No records found in date range")
                         
-                    return results
-                return []
-        except sqlite3.Error as e:
-            logging.error(f"SQLite error obteniendo registros: {e}")
-            return []
-        except Exception as e:
-            logging.error(f"Error obteniendo registros: {e}")
-            return []
+#                     return results
+#                 return []
+#         except sqlite3.Error as e:
+#             logging.error(f"SQLite error obteniendo registros: {e}")
+#             return []
+#         except Exception as e:
+#             logging.error(f"Error obteniendo registros: {e}")
+#             return []
 
-    def insert_batch_record(self, lote_id: str, hash_lote: str, fecha_referencia: date) -> bool:
-        """
-        Inserta un único registro en tabla lote_diario que representa todo el batch
+#     def insert_batch_record(self, lote_id: str, hash_lote: str, fecha_referencia: date) -> bool:
+#         """
+#         Inserta un único registro en tabla lote_diario que representa todo el batch
         
-        Args:
-            lote_id: ID único del lote
-            hash_lote: Hash MD5 del dataset completo
-            fecha_referencia: Fecha de referencia del batch (no puede ser null)
-        """
-        if not fecha_referencia:
-            fecha_referencia = datetime.now().date()
-            logging.warning("Fecha referencia no proporcionada, usando fecha actual")
+#         Args:
+#             lote_id: ID único del lote
+#             hash_lote: Hash MD5 del dataset completo
+#             fecha_referencia: Fecha de referencia del batch (no puede ser null)
+#         """
+#         if not fecha_referencia:
+#             fecha_referencia = datetime.now().date()
+#             logging.warning("Fecha referencia no proporcionada, usando fecha actual")
             
-        try:
-            # Connect to SQLite database
-            with sqlite3.connect(self.config['database']) as conn:
-                cursor = conn.cursor()
+#         try:
+#             # Connect to SQLite database
+#             with sqlite3.connect(self.config['database']) as conn:
+#                 cursor = conn.cursor()
                 
-                # Check if record exists first (SQLite doesn't have ON CONFLICT)
-                check_query = "SELECT 1 FROM lote_diario WHERE lote = ?"
-                cursor.execute(check_query, (lote_id,))
+#                 # Check if record exists first (SQLite doesn't have ON CONFLICT)
+#                 check_query = "SELECT 1 FROM lote_diario WHERE lote = ?"
+#                 cursor.execute(check_query, (lote_id,))
                 
-                if not cursor.fetchone():
-                    # Insert only if not exists
-                    query = """
-                        INSERT INTO lote_diario (
-                            lote, fecha_insercion, 
-                            fecha_referencia, hash_lote
-                        ) VALUES (?, ?, ?, ?)
-                    """
-                    cursor.execute(query, (
-                        lote_id,
-                        datetime.now(pytz.utc),
-                        fecha_referencia,
-                        hash_lote
-                    ))
-                    conn.commit()
-                    return cursor.rowcount > 0
-                return True  # Record already exists, consider it a success
-        except sqlite3.Error as e:
-            logging.error(f"SQLite error insertando registro de lote: {e}")
-            return False
-        except Exception as e:
-            logging.error(f"Error insertando registro de lote: {e}")
-            return False
+#                 if not cursor.fetchone():
+#                     # Insert only if not exists
+#                     query = """
+#                         INSERT INTO lote_diario (
+#                             lote, fecha_insercion, 
+#                             fecha_referencia, hash_lote
+#                         ) VALUES (?, ?, ?, ?)
+#                     """
+#                     cursor.execute(query, (
+#                         lote_id,
+#                         datetime.now(pytz.utc),
+#                         fecha_referencia,
+#                         hash_lote
+#                     ))
+#                     conn.commit()
+#                     return cursor.rowcount > 0
+#                 return True  # Record already exists, consider it a success
+#         except sqlite3.Error as e:
+#             logging.error(f"SQLite error insertando registro de lote: {e}")
+#             return False
+#         except Exception as e:
+#             logging.error(f"Error insertando registro de lote: {e}")
+#             return False
 
-    def insert_full_batch_transaction(self, 
-                                   batch_data: List[Dict], 
-                                   lote_id: str, 
-                                   batch_hash: str,
-                                   fecha_referencia: date) -> bool:
-        """
-        Inserta en una sola transacción:
-        1. Registro en tabla lote_diario
-        2. Todos los registros en estado_factura_venta
+#     def insert_full_batch_transaction(self, 
+#                                    batch_data: List[Dict], 
+#                                    lote_id: str, 
+#                                    batch_hash: str,
+#                                    fecha_referencia: date) -> bool:
+#         """
+#         Inserta en una sola transacción:
+#         1. Registro en tabla lote_diario
+#         2. Todos los registros en estado_factura_venta
         
-        Args:
-            batch_data: Lista de diccionarios con datos de facturas
-            lote_id: ID del lote
-            batch_hash: Hash del dataset completo
-            fecha_referencia: Fecha de referencia
-        """
-        # Obtener fecha referencia válida
-        if not fecha_referencia:
-            fecha_referencia = datetime.now().date()
+#         Args:
+#             batch_data: Lista de diccionarios con datos de facturas
+#             lote_id: ID del lote
+#             batch_hash: Hash del dataset completo
+#             fecha_referencia: Fecha de referencia
+#         """
+#         # Obtener fecha referencia válida
+#         if not fecha_referencia:
+#             fecha_referencia = datetime.now().date()
         
-        try:
-            # Connect to SQLite database
-            with sqlite3.connect(self.config['database']) as conn:
-                try:
-                    cursor = conn.cursor()
+#         try:
+#             # Connect to SQLite database
+#             with sqlite3.connect(self.config['database']) as conn:
+#                 try:
+#                     cursor = conn.cursor()
                     
-                    # 1. Insertar registro en tabla lotes
-                    # Check if record exists first (SQLite doesn't have ON CONFLICT)
-                    check_query = "SELECT 1 FROM lote_diario WHERE lote = ?"
-                    cursor.execute(check_query, (lote_id,))
+#                     # 1. Insertar registro en tabla lotes
+#                     # Check if record exists first (SQLite doesn't have ON CONFLICT)
+#                     check_query = "SELECT 1 FROM lote_diario WHERE lote = ?"
+#                     cursor.execute(check_query, (lote_id,))
                     
-                    if not cursor.fetchone():
-                        lote_query = """
-                            INSERT INTO lote_diario (
-                                lote, fecha_insercion,
-                                fecha_referencia, hash_lote
-                            ) VALUES (?, ?, ?, ?)
-                        """
-                        lote_params = (
-                            lote_id,
-                            datetime.now(pytz.utc),
-                            fecha_referencia,
-                            batch_hash
-                        )
-                        logging.debug(f"Query lote:\n{lote_query}\nParams: {lote_params}")
-                        cursor.execute(lote_query, lote_params)
+#                     if not cursor.fetchone():
+#                         lote_query = """
+#                             INSERT INTO lote_diario (
+#                                 lote, fecha_insercion,
+#                                 fecha_referencia, hash_lote
+#                             ) VALUES (?, ?, ?, ?)
+#                         """
+#                         lote_params = (
+#                             lote_id,
+#                             datetime.now(pytz.utc),
+#                             fecha_referencia,
+#                             batch_hash
+#                         )
+#                         logging.debug(f"Query lote:\n{lote_query}\nParams: {lote_params}")
+#                         cursor.execute(lote_query, lote_params)
                     
-                    # 2. Insertar todas las facturas
-                    factura_query = """
-                        INSERT INTO estado_factura_venta (
-                            folio, total_partidas, descripcion,
-                            hash, fecha_procesamiento, id_lote, estado, fecha_emision
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                    """
-                    for record in batch_data:
-                        # Validar campos requeridos
-                        if not record.get('folio'):
-                            logging.error("Intento de insertar registro sin folio")
-                            continue
+#                     # 2. Insertar todas las facturas
+#                     factura_query = """
+#                         INSERT INTO estado_factura_venta (
+#                             folio, total_partidas, descripcion,
+#                             hash, fecha_procesamiento, id_lote, estado, fecha_emision
+#                         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+#                     """
+#                     for record in batch_data:
+#                         # Validar campos requeridos
+#                         if not record.get('folio'):
+#                             logging.error("Intento de insertar registro sin folio")
+#                             continue
                         
-                        if not record.get('fecha_emision'):
-                            logging.warning(f"Folio {record['folio']} sin fecha, usando fecha actual")
-                            record['fecha_emision'] = datetime.now().date()
+#                         if not record.get('fecha_emision'):
+#                             logging.warning(f"Folio {record['folio']} sin fecha, usando fecha actual")
+#                             record['fecha_emision'] = datetime.now().date()
                         
-                        factura_params = (
-                            record['folio'],
-                            record['total_partidas'],
-                            record['descripcion'],
-                            record['hash'],
-                            datetime.now().date(),  # SQLite doesn't need ::date cast
-                            lote_id,
-                            'pendiente',
-                            record['fecha_emision']
-                        )
-                        logging.debug(f"Query factura:\n{factura_query}\nParams: {factura_params}")
-                        cursor.execute(factura_query, factura_params)
+#                         factura_params = (
+#                             record['folio'],
+#                             record['total_partidas'],
+#                             record['descripcion'],
+#                             record['hash'],
+#                             datetime.now().date(),  # SQLite doesn't need ::date cast
+#                             lote_id,
+#                             'pendiente',
+#                             record['fecha_emision']
+#                         )
+#                         logging.debug(f"Query factura:\n{factura_query}\nParams: {factura_params}")
+#                         cursor.execute(factura_query, factura_params)
                     
-                    conn.commit()
-                    return True
-                except sqlite3.Error as e:
-                    conn.rollback()
-                    logging.error(f"SQLite error en transacción: {e}")
-                    return False
-                except Exception as e:
-                    conn.rollback()
-                    logging.error(f"Error en transacción: {e}")
-                    return False
-        except sqlite3.Error as e:
-            logging.error(f"SQLite error de conexión: {e}")
-            return False
-        except Exception as e:
-            logging.error(f"Error de conexión: {e}")
-            return False
+#                     conn.commit()
+#                     return True
+#                 except sqlite3.Error as e:
+#                     conn.rollback()
+#                     logging.error(f"SQLite error en transacción: {e}")
+#                     return False
+#                 except Exception as e:
+#                     conn.rollback()
+#                     logging.error(f"Error en transacción: {e}")
+#                     return False
+#         except sqlite3.Error as e:
+#             logging.error(f"SQLite error de conexión: {e}")
+#             return False
+#         except Exception as e:
+#             logging.error(f"Error de conexión: {e}")
+#             return False
 
-    def _ensure_indexes(self):
-        """Create required indexes if missing"""
-        try:
-            with sqlite3.connect(self.config['database']) as conn:
-                cursor = conn.cursor()
-                cursor.execute("""
-                    CREATE INDEX IF NOT EXISTS idx_lote_diario_fecha_ref 
-                    ON lote_diario (fecha_referencia)
-                """)
-                conn.commit()
-        except sqlite3.Error as e:
-            logging.error(f"SQLite error creating indexes: {e}")
-        except Exception as e:
-            logging.error(f"Index creation error: {str(e)}")
+#     def _ensure_indexes(self):
+#         """Create required indexes if missing"""
+#         try:
+#             with sqlite3.connect(self.config['database']) as conn:
+#                 cursor = conn.cursor()
+#                 cursor.execute("""
+#                     CREATE INDEX IF NOT EXISTS idx_lote_diario_fecha_ref 
+#                     ON lote_diario (fecha_referencia)
+#                 """)
+#                 conn.commit()
+#         except sqlite3.Error as e:
+#             logging.error(f"SQLite error creating indexes: {e}")
+#         except Exception as e:
+#             logging.error(f"Index creation error: {str(e)}")
 
-    def get_lotes_by_fecha_referencia(self, fecha: str) -> List[Dict]:
-        """
-        Retrieve lotes by reference date
-        Returns: List of dictionaries with lote data
-        """
-        query = """
-            SELECT id_lote, rango_fechas, hash_lote, fecha_procesamiento
-            FROM lote_diario
-            WHERE fecha_referencia = ?
-            ORDER BY fecha_procesamiento DESC
-        """
+#     def get_lotes_by_fecha_referencia(self, fecha: str) -> List[Dict]:
+#         """
+#         Retrieve lotes by reference date
+#         Returns: List of dictionaries with lote data
+#         """
+#         query = """
+#             SELECT id_lote, rango_fechas, hash_lote, fecha_procesamiento
+#             FROM lote_diario
+#             WHERE fecha_referencia = ?
+#             ORDER BY fecha_procesamiento DESC
+#         """
         
-        try:
-            with sqlite3.connect(self.config['database']) as conn:
-                # Enable dictionary cursor
-                conn.row_factory = sqlite3.Row
-                cursor = conn.cursor()
-                cursor.execute(query, (fecha,))
-                return [dict(row) for row in cursor.fetchall()]
-        except sqlite3.Error as e:
-            logging.error(f"SQLite error fetching lotes by fecha: {e}")
-            return []
-        except Exception as e:
-            logging.error(f"Error fetching lotes by fecha: {str(e)}")
-            return []
+#         try:
+#             with sqlite3.connect(self.config['database']) as conn:
+#                 # Enable dictionary cursor
+#                 conn.row_factory = sqlite3.Row
+#                 cursor = conn.cursor()
+#                 cursor.execute(query, (fecha,))
+#                 return [dict(row) for row in cursor.fetchall()]
+#         except sqlite3.Error as e:
+#             logging.error(f"SQLite error fetching lotes by fecha: {e}")
+#             return []
+#         except Exception as e:
+#             logging.error(f"Error fetching lotes by fecha: {str(e)}")
+#             return []
             
-    def get_single_lote_by_date(self, start_date: date) -> Optional[Dict]:
-        """
-        Retrieve a single record from lote_diario by start date
+#     def get_single_lote_by_date(self, start_date: date) -> Optional[Dict]:
+#         """
+#         Retrieve a single record from lote_diario by start date
         
-        Args:
-            start_date: The reference date to search for
+#         Args:
+#             start_date: The reference date to search for
             
-        Returns:
-            A dictionary with the lote data or None if not found
-        """
-        try:
-            # Connect to SQLite database
-            with sqlite3.connect(self.config['database']) as conn:
-                # Enable dictionary cursor
-                conn.row_factory = sqlite3.Row
-                cursor = conn.cursor()
+#         Returns:
+#             A dictionary with the lote data or None if not found
+#         """
+#         try:
+#             # Connect to SQLite database
+#             with sqlite3.connect(self.config['database']) as conn:
+#                 # Enable dictionary cursor
+#                 conn.row_factory = sqlite3.Row
+#                 cursor = conn.cursor()
                 
-                query = """
-                    SELECT lote, fecha_insercion, fecha_referencia, hash_lote
-                    FROM lote_diario
-                    WHERE fecha_referencia = ?
-                    ORDER BY fecha_insercion DESC
-                    LIMIT 1
-                """
+#                 query = """
+#                     SELECT lote, fecha_insercion, fecha_referencia, hash_lote
+#                     FROM lote_diario
+#                     WHERE fecha_referencia = ?
+#                     ORDER BY fecha_insercion DESC
+#                     LIMIT 1
+#                 """
                 
-                cursor.execute(query, (start_date,))
-                row = cursor.fetchone()
+#                 cursor.execute(query, (start_date,))
+#                 row = cursor.fetchone()
                 
-                if row:
-                    # With sqlite.Row factory, we can convert directly to dict
-                    return dict(row)
-                return None
-        except sqlite3.Error as e:
-            logging.error(f"SQLite error retrieving single lote by date: {e}")
-            return None
-        except Exception as e:
-            logging.error(f"Error retrieving single lote by date: {e}")
-            return None
+#                 if row:
+#                     # With sqlite.Row factory, we can convert directly to dict
+#                     return dict(row)
+#                 return None
+#         except sqlite3.Error as e:
+#             logging.error(f"SQLite error retrieving single lote by date: {e}")
+#             return None
+#         except Exception as e:
+#             logging.error(f"Error retrieving single lote by date: {e}")
+#             return None

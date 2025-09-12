@@ -1,6 +1,6 @@
 from typing import Dict, Any, List, Optional
 from datetime import datetime
-from psycopg2.extensions import AsIs
+
 
 
 class VentasTrackingModel():

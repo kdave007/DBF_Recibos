@@ -76,10 +76,10 @@ class OP:
              
             # self.verify.isReady(record.get('dbf_record', {}))
             # sys.exit()
-            if not self.verify.isReady(record):
-                total_failed_op += 1
-                logging.info(f"operation skipping folio : {record.get('folio')}")
-                continue
+            # if not self.verify.isReady(record.get('dbf_record', {})):
+                # total_failed_op += 1
+            logging.info(f"operation skipping folio : {record.get('folio')}")
+            #continue
             
             # Make the first API call
             waiting_line_result = self.send_req.waiting_line(record, base_url, api_key)
