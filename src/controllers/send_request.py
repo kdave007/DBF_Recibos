@@ -3,7 +3,7 @@ import os
 import sys
 from turtle import st
 from pathlib import Path
-from src.config.db_config import PostgresConnection
+from src.config.db_config import SQLiteConnection
 from src.db.response_tracking import ResponseTracking
 from src.utils.response_simulator import ResponseSimulator
 import requests
@@ -34,7 +34,7 @@ class SendRequest:
 
     def __init__(self):
         # Get database configuration as a dictionary
-        self.db_config = PostgresConnection.get_db_config()
+        self.db_config = SQLiteConnection.get_db_config()
         # Initialize ResponseTracking with the configuration dictionary
         self.response_tracking = ResponseTracking(self.db_config)
 

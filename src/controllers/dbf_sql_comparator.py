@@ -1,8 +1,8 @@
 import logging
 from datetime import datetime, date
 from typing import Dict, List, Optional, Any
-from src.config.db_config import PostgresConnection
-from src.db.postgres_tracking import PostgresTracking
+from src.config.db_config import SQLiteConnection
+from src.db.sql_tracking import SQLTracking
 
 
 class DBFSQLComparator:
@@ -16,21 +16,21 @@ class DBFSQLComparator:
         Initialize the comparator with database configuration.
         
         Args:
-            db_config: Either a PostgresConnection object or a dictionary with database connection parameters.
+            db_config: Either a SQLiteConnection object or a dictionary with database connection parameters.
                        If None, default configuration will be used.
         """
-        # Check if db_config is a PostgresConnection object or a dictionary
-        if isinstance(db_config, PostgresConnection):
+        # Check if db_config is a SQLiteConnection object or a dictionary
+        if isinstance(db_config, SQLiteConnection):
             self.db = db_config
-            self.db_config = PostgresConnection.get_db_config()
+            self.db_config = SQLiteConnection.get_db_config()
         elif isinstance(db_config, dict):
             # It's already a config dictionary
             self.db_config = db_config
         else:
             # Use default configuration
-            self.db_config = PostgresConnection.get_db_config()
+            self.db_config = SQLiteConnection.get_db_config()
             
-        self.tracker = PostgresTracking(self.db_config)
+        self.tracker = SQLTracking(self.db_config)
 
     def add_all(self, dbf_records: Dict[str, Any]) -> Dict[str, Any]:
         """

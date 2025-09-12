@@ -1,12 +1,12 @@
 from typing import Dict, Any, Optional, List, Iterator
-from src.config.db_config import PostgresConnection
+from src.config.db_config import SQLiteConnection
 from datetime import datetime
-import psycopg2
+import sqlite3
 import logging
 
 class BaseModel:
     def __init__(self):
-        self.db = PostgresConnection()
+        self.db = SQLiteConnection()
         self.table_name = ""  # Will be set by child classes
         self.chunk_size = 100  # Default chunk size for processing
 
@@ -47,24 +47,29 @@ class BaseModel:
         # Print first query for any table
         elif not hasattr(self, '_printed_' + self.table_name):
             print(f"\nQuery for {self.table_name}:")
-            print(f"INSERT INTO {self.table_name} ({column_names}) VALUES ({', '.join(['%s']*len(columns))})")
+            print(f"INSERT INTO {self.table_name} ({column_names}) VALUES ({', '.join(['?']*len(columns))})")
             setattr(self, '_printed_' + self.table_name, True)
         
         # Build the parameterized query for actual execution
-        placeholders = ', '.join(['%s'] * len(columns))
+        placeholders = ', '.join(['?'] * len(columns))
         query = f"INSERT INTO {self.table_name} ({column_names}) VALUES ({placeholders})"
         print(query)
         
         # Execute the query
-        cursor = connection.cursor() if connection else self.db.cursor
         try:
+            if connection:
+                cursor = connection.cursor()
+            else:
+                connection = self.db.get_connection()
+                cursor = connection.cursor()
+                
             cursor.executemany(query, values)
             if not connection:  # Only commit if we're not in a transaction
-                self.db.connection.commit()
+                connection.commit()
         except Exception as e:
             error_msg = f"Failed to insert records into {self.table_name}"
-            if isinstance(e, psycopg2.Error):
-                error_msg += f": {e.pgerror if e.pgerror else str(e)} (Code: {e.pgcode})"
+            if isinstance(e, sqlite3.Error):
+                error_msg += f": {str(e)}"
             else:
                 error_msg += f": {str(e)}"
             raise self.DatabaseError(error_msg) from e
@@ -80,27 +85,24 @@ class BaseModel:
             query = f"""
             UPDATE {self.table_name}
             SET 
-                status = %(status)s,
-                error_message = %(error_message)s,
-                api_response = %(api_response)s,
-                updated_at = NOW(),
+                status = ?,
+                error_message = ?,
+                api_response = ?,
+                updated_at = DATETIME('now'),
                 retry_count = CASE 
                     WHEN status = 'failed' THEN retry_count + 1
                     ELSE retry_count
                 END
-            WHERE record_id = ANY(%(record_ids)s)
+            WHERE record_id IN (SELECT value FROM json_each(?))
             RETURNING record_id, status
             """
             
             results = []
             # Process record_ids in chunks
             for chunk_ids in self._chunk_records(record_ids):
-                params = {
-                    'status': status,
-                    'error_message': error_message,
-                    'api_response': api_response,
-                    'record_ids': chunk_ids
-                }
+                # Convert record_ids list to JSON string for SQLite json_each function
+                import json
+                params = (status, error_message, json.dumps(api_response), json.dumps(chunk_ids))
                 
                 chunk_result = self.db.execute_query(query, params)
                 if not chunk_result:
@@ -111,8 +113,8 @@ class BaseModel:
             
         except Exception as e:
             error_msg = f"Failed to update batch status in {self.table_name}"
-            if isinstance(e, psycopg2.Error):
-                error_msg += f": {e.pgerror if e.pgerror else str(e)} (Code: {e.pgcode})"
+            if isinstance(e, sqlite3.Error):
+                error_msg += f": {str(e)}"
             else:
                 error_msg += f": {str(e)}"
             raise self.DatabaseError(error_msg) from e
@@ -126,18 +128,18 @@ class BaseModel:
             WHERE status = 'pending'
             AND (retry_count < 3 OR retry_count IS NULL)
             ORDER BY created_at ASC
-            LIMIT %(limit)s
+            LIMIT ?
             """
             
-            result = self.db.execute_query(query, {'limit': limit})
+            result = self.db.execute_query(query, (limit,))
             if not result:
                 logging.info(f"No pending records found in {self.table_name}")
             return result
             
         except Exception as e:
             error_msg = f"Failed to get pending records from {self.table_name}"
-            if isinstance(e, psycopg2.Error):
-                error_msg += f": {e.pgerror if e.pgerror else str(e)} (Code: {e.pgcode})"
+            if isinstance(e, sqlite3.Error):
+                error_msg += f": {str(e)}"
             else:
                 error_msg += f": {str(e)}"
             raise self.DatabaseError(error_msg) from e
@@ -149,19 +151,19 @@ class BaseModel:
             SELECT *
             FROM {self.table_name}
             WHERE status = 'failed'
-            AND retry_count >= %(min_retries)s
+            AND retry_count >= ?
             ORDER BY updated_at DESC
             """
             
-            result = self.db.execute_query(query, {'min_retries': min_retries})
+            result = self.db.execute_query(query, (min_retries,))
             if not result:
                 logging.info(f"No failed records found in {self.table_name} with {min_retries}+ retries")
             return result
             
         except Exception as e:
             error_msg = f"Failed to get failed records from {self.table_name}"
-            if isinstance(e, psycopg2.Error):
-                error_msg += f": {e.pgerror if e.pgerror else str(e)} (Code: {e.pgcode})"
+            if isinstance(e, sqlite3.Error):
+                error_msg += f": {str(e)}"
             else:
                 error_msg += f": {str(e)}"
             raise self.DatabaseError(error_msg) from e

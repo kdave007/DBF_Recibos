@@ -4,7 +4,7 @@ import logging
 import time
 from turtle import st
 from pathlib import Path
-from src.config.db_config import PostgresConnection
+from src.config.db_config import SQLiteConnection
 import hashlib
 # Add project root to Python path
 project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -13,29 +13,20 @@ sys.path.append(project_root)
 from datetime import date, timedelta
 from src.controllers.ventas_controller import VentasController
 from src.dbf_enc_reader.mapping_manager import MappingManager
-from src.config.dbf_config import DBFConfig
-from src.models.ventas_model import VentasModel
 from src.controllers.dbf_sql_comparator import DBFSQLComparator
-from src.controllers.insertion_process import InsertionProcess
 from src.db.retries_tracking import RetriesTracking
 
 class MatchesProcess:
 
     def __init__(self) -> None:
         # Get database configuration
-        
-        self.db_config = PostgresConnection.get_db_config()
+        self.db_config = SQLiteConnection.get_db_config()
         
         # Initialize the comparator and insertion processor
         self.comparator = DBFSQLComparator(self.db_config)
-        self.insertion_processor = InsertionProcess(self.db_config)
-
         self.retry_tracker = RetriesTracking(self.db_config)
 
-        
-
     def compare_data(self, config, start_date, end_date):
-        
         #TO DO : this config may be pass as a parameter and not defined here, but just for testing
        
         # Test date range using a date we know exists in the DBF
@@ -63,9 +54,9 @@ class MatchesProcess:
         
         # Obtener registros SQL
         sql_records = self.get_sql_data(start_date, end_date, 'FA')
-        
+       
         if not sql_records:
-            print(f"No hay registros en SQL entre {start_date} y {end_date}. Insertando nuevos registros")
+            print(f"No hay registros en SQL entre {start_date} y {end_date}. agregando a lista de nuevos registros")
             # When no SQL records, use add_all to directly process all DBF records
             comparison_result = self.comparator.add_all(dbf_records=dbf_results)
         else:
@@ -81,8 +72,6 @@ class MatchesProcess:
         # Return the full result for programmatic use
         return comparison_result
                 
-        
-        
         # print(f"\nRegistros SQL encontrados: {len(dbf_results)}")
         # print(f"\nMostrando 2 registros de ejemplo:")
         # for idx, record in enumerate(dbf_results['data'][:2], 1):
@@ -124,12 +113,13 @@ class MatchesProcess:
 
     def get_sql_data(self, start_date, end_date, tipo_doc):
         """Obtiene datos SQL para comparación"""
-        from src.db.postgres_tracking import PostgresTracking
+        from src.db.sql_tracking import SQLTracking
+        from src.config.db_config import SQLiteConnection
         
-        # Get database configuration from PostgresConnection
-        db_config = PostgresConnection.get_db_config()
+        # Get database configuration from SQLiteConnection
+        db_config = SQLiteConnection.get_db_config()
         
-        tracker = PostgresTracking(db_config)
+        tracker = SQLTracking(db_config)
         return tracker.get_records_by_date_range(start_date, end_date, tipo_doc)
 
 
@@ -160,46 +150,6 @@ class MatchesProcess:
         
         # Get API operations
         api_ops = detailed_comparison.get('api_operations', {})
-        
-        # Print sample of records to create (DBF only)
-        # create_records = api_ops.get('create', [])
-        # if create_records:
-        #     print("\n=== SAMPLE RECORDS TO CREATE (DBF only) ===")
-        #     for i, record in enumerate(create_records[:3], 1):
-        #         print(f"\nRecord #{i}:")
-        #         print(f"  Folio: {record.get('folio')}")
-        #         if 'md5_hash' in record:
-        #             print(f"  Hash: {record.get('md5_hash')}")
-        #         if 'fecha' in record:
-        #             print(f"  Fecha: {record.get('fecha')}")
-        #     if len(create_records) > 3:
-        #         print(f"\n... and {len(create_records) - 3} more records to create")
-        
-        # # Print sample of records to update (mismatched)
-        # update_records = api_ops.get('update', [])
-        # if update_records:
-        #     print("\n=== SAMPLE RECORDS TO UPDATE (hash mismatch) ===")
-        #     for i, record in enumerate(update_records[:3], 1):
-        #         print(f"\nRecord #{i}:")
-        #         print(f"  Folio: {record.get('folio')}")
-        #         print(f"  DBF Hash: {record.get('dbf_hash')}")
-        #         print(f"  SQL Hash: {record.get('sql_hash')}")
-        #     if len(update_records) > 3:
-        #         print(f"\n... and {len(update_records) - 3} more records to update")
-        
-        # # Print sample of records to delete (SQL only)
-        # delete_records = api_ops.get('delete', [])
-        # if delete_records:
-        #     print("\n=== SAMPLE RECORDS TO DELETE (SQL only) ===")
-        #     for i, record in enumerate(delete_records[:3], 1):
-        #         print(f"\nRecord #{i}:")
-        #         print(f"  Folio: {record.get('folio')}")
-        #         if 'hash' in record:
-        #             print(f"  Hash: {record.get('hash')}")
-        #         if 'fecha_emision' in record:
-        #             print(f"  Fecha: {record.get('fecha_emision')}")
-        #     if len(delete_records) > 3:
-        #         print(f"\n... and {len(delete_records) - 3} more records to delete")
         
         print("\n=================================================\n")
 

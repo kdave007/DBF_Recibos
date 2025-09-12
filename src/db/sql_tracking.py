@@ -4,8 +4,8 @@ from typing import List, Dict, Optional
 import logging
 import pytz
 
-class PostgresTracking:
-    """Sistema de seguimiento para estado_factura_venta"""
+class SQLTracking:
+    """Sistema de seguimiento para estado_factura_venta usando SQLite"""
     
     def __init__(self, db_config: dict):
         self.config = db_config
@@ -13,30 +13,31 @@ class PostgresTracking:
     def get_by_lote(self, id_lote: str = None, limit: int = 100) -> List[Dict]:
         """Obtiene estados de facturas"""
         try:
-            # Connect with explicit parameters instead of using **
-            with psycopg2.connect(
-                host=self.config['host'],
-                database=self.config['database'],
-                user=self.config['user'],
-                password=self.config['password'],
-                port=self.config['port']
-            ) as conn:
-                with conn.cursor() as cursor:
-                    base_query = sql.SQL("""
-                        SELECT id, folio, total_partidas, descripcion, 
-                               hash, fecha_procesamiento, id_lote, estado, fecha_emision, accion
-                        FROM estado_factura_venta
-                    """)
-                    
-                    if id_lote:
-                        query = base_query + sql.SQL(" WHERE id_lote = %s ORDER BY fecha_procesamiento DESC")
-                        cursor.execute(query, (id_lote,))
-                    else:
-                        query = base_query + sql.SQL(" ORDER BY fecha_procesamiento DESC LIMIT %s")
-                        cursor.execute(query, (limit,))
-                    
-                    columns = [desc[0] for desc in cursor.description]
-                    return [dict(zip(columns, row)) for row in cursor.fetchall()]
+            # Connect to SQLite database
+            with sqlite3.connect(self.config['database']) as conn:
+                # Enable dictionary cursor
+                conn.row_factory = sqlite3.Row
+                cursor = conn.cursor()
+                
+                base_query = """
+                    SELECT id, folio, total_partidas, descripcion, 
+                           hash, fecha_procesamiento, id_lote, estado, fecha_emision, accion
+                    FROM estado_factura_venta
+                """
+                
+                if id_lote:
+                    query = base_query + " WHERE id_lote = ? ORDER BY fecha_procesamiento DESC"
+                    cursor.execute(query, (id_lote,))
+                else:
+                    query = base_query + " ORDER BY fecha_procesamiento DESC LIMIT ?"
+                    cursor.execute(query, (limit,))
+                
+                # With sqlite.Row factory, we can convert rows directly to dict
+                return [dict(row) for row in cursor.fetchall()]
+                
+        except sqlite3.Error as e:
+            logging.error(f"SQLite error obteniendo estados: {e}")
+            return []
         except Exception as e:
             logging.error(f"Error obteniendo estados: {e}")
             return []
@@ -51,33 +52,31 @@ class PostgresTracking:
                             fecha_emision: date = None) -> bool:
         """Actualiza o inserta estado de factura"""
         try:
-            # Connect with explicit parameters instead of using **
-            with psycopg2.connect(
-                host=self.config['host'],
-                database=self.config['database'],
-                user=self.config['user'],
-                password=self.config['password'],
-                port=self.config['port']
-            ) as conn:
-                with conn.cursor() as cursor:
-                    # Solo insert si no existe
-                    query = sql.SQL("""
+            # Connect to SQLite database
+            with sqlite3.connect(self.config['database']) as conn:
+                cursor = conn.cursor()
+                
+                # Check if record exists first (SQLite doesn't have ON CONFLICT)
+                check_query = "SELECT 1 FROM estado_factura_venta WHERE folio = ?"
+                cursor.execute(check_query, (folio,))
+                
+                # If record doesn't exist, insert it
+                if not cursor.fetchone():
+                    query = """
                         INSERT INTO estado_factura_venta (
                             folio, total_partidas, descripcion,
                             hash, fecha_procesamiento, id_lote, estado, fecha_emision
-                        ) VALUES (%s, %s, %s, %s, %s::date, %s, %s, %s)
-                        ON CONFLICT (folio) DO NOTHING
-                        RETURNING id
-                    """)
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    """
                     
                     params = (folio, total_partidas, descripcion, hash, datetime.now().date(), id_lote, estado, fecha_emision)
                     cursor.execute(query, params)
-                    
-                    # Si se insertó, retornará el id
-                    if cursor.fetchone():
-                        conn.commit()
-                        return True
-                    return False
+                    conn.commit()
+                    return cursor.rowcount > 0
+                return False  # Record already exists
+        except sqlite3.Error as e:
+            logging.error(f"SQLite error insertando estado: {e}")
+            return False
         except Exception as e:
             logging.error(f"Error insertando estado: {e}")
             return False
@@ -88,35 +87,33 @@ class PostgresTracking:
                               new_hash: str = None) -> bool:
         """Actualiza solo estado y hash de factura existente"""
         try:
-            # Connect with explicit parameters instead of using **
-            with psycopg2.connect(
-                host=self.config['host'],
-                database=self.config['database'],
-                user=self.config['user'],
-                password=self.config['password'],
-                port=self.config['port']
-            ) as conn:
-                with conn.cursor() as cursor:
-                    if new_hash:
-                        query = sql.SQL("""
-                            UPDATE estado_factura_venta
-                            SET estado = %s,
-                                hash = %s,
-                                fecha_procesamiento = %s
-                            WHERE folio = %s
-                        """)
-                        cursor.execute(query, (new_status, new_hash, datetime.now(pytz.utc), folio))
-                    else:
-                        query = sql.SQL("""
-                            UPDATE estado_factura_venta
-                            SET estado = %s,
-                                fecha_procesamiento = %s
-                            WHERE folio = %s
-                        """)
-                        cursor.execute(query, (new_status, datetime.now(pytz.utc), folio))
-                    
-                    conn.commit()
-                    return cursor.rowcount > 0
+            # Connect to SQLite database
+            with sqlite3.connect(self.config['database']) as conn:
+                cursor = conn.cursor()
+                
+                if new_hash:
+                    query = """
+                        UPDATE estado_factura_venta
+                        SET estado = ?,
+                            hash = ?,
+                            fecha_procesamiento = ?
+                        WHERE folio = ?
+                    """
+                    cursor.execute(query, (new_status, new_hash, datetime.now(pytz.utc), folio))
+                else:
+                    query = """
+                        UPDATE estado_factura_venta
+                        SET estado = ?,
+                            fecha_procesamiento = ?
+                        WHERE folio = ?
+                    """
+                    cursor.execute(query, (new_status, datetime.now(pytz.utc), folio))
+                
+                conn.commit()
+                return cursor.rowcount > 0
+        except sqlite3.Error as e:
+            logging.error(f"SQLite error actualizando estado: {e}")
+            return False
         except Exception as e:
             logging.error(f"Error actualizando estado: {e}")
             return False

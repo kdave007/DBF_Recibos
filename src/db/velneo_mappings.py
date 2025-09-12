@@ -1,22 +1,17 @@
-import psycopg2
-from psycopg2 import sql
+import sqlite3
 from datetime import datetime, date
-from typing import List, Dict, Optional, Any
+from typing import List, Dict, Optional, Any, Union
 import logging
 import pytz
-from src.db.db_connection_pool import DBConnectionPool
-
-
-
 
 class VelneoMappings:
-    """Seleccion de bases de datos"""
+    """Seleccion de bases de datos usando SQLite"""
     
     def __init__(self, db_config: dict):
         self.config = db_config
         # Initialize the connection pool
+        from src.db.db_connection_pool import DBConnectionPool
         self.pool = DBConnectionPool(db_config, min_conn=2, max_conn=10)
-    
 
     def get_cliente(self):
         conn = None
@@ -40,8 +35,11 @@ class VelneoMappings:
             
             return result[0] if result else None
             
-        except Exception as e:
+        except sqlite3.Error as e:
             logging.error(f"Error retrieving cliente Velneo ID: {e}")
+            return None
+        except Exception as e:
+            logging.error(f"Unexpected error retrieving cliente Velneo ID: {e}")
             return None
         finally:
             if cursor:
@@ -72,8 +70,8 @@ class VelneoMappings:
             cursor = conn.cursor()
             
             query = """
-            SELECT velneo FROM public.almacen
-            WHERE tienda = %s and plaza = %s LIMIT 1; 
+            SELECT velneo FROM almacen
+            WHERE tienda = ? and plaza = ? LIMIT 1; 
             """
             
             cursor.execute(query, (store, plaza))
@@ -113,7 +111,7 @@ class VelneoMappings:
             
             query = """
             SELECT id_velneo FROM general_misc 
-            WHERE title = 'serie' AND tienda = %s
+            WHERE title = 'serie' AND tienda = ?
             """
             
             cursor.execute(query, (store,))
@@ -121,8 +119,11 @@ class VelneoMappings:
             
             return result[0] if result else None
             
-        except Exception as e:
+        except sqlite3.Error as e:
             logging.error(f"Error retrieving serie Velneo ID: {e}")
+            return None
+        except Exception as e:
+            logging.error(f"Unexpected error retrieving serie Velneo ID: {e}")
             return None
         finally:
             if cursor:
@@ -153,7 +154,7 @@ class VelneoMappings:
             
             query = """
             SELECT id_velneo FROM general_misc 
-            WHERE title = 'empresa' AND tienda = %s
+            WHERE title = 'empresa' AND tienda = ?
             """
             
             cursor.execute(query, (store,))
@@ -161,8 +162,11 @@ class VelneoMappings:
             
             return result[0] if result else None
             
-        except Exception as e:
+        except sqlite3.Error as e:
             logging.error(f"Error retrieving empresa Velneo ID: {e}")
+            return None
+        except Exception as e:
+            logging.error(f"Unexpected error retrieving empresa Velneo ID: {e}")
             return None
         finally:
             if cursor:
@@ -193,7 +197,7 @@ class VelneoMappings:
             
             query = """
             SELECT id_velneo FROM general_misc 
-            WHERE title = 'division' AND tienda = %s
+            WHERE title = 'division' AND tienda = ?
             """
             
             cursor.execute(query, (store,))
@@ -201,8 +205,11 @@ class VelneoMappings:
             
             return result[0] if result else None
             
-        except Exception as e:
+        except sqlite3.Error as e:
             logging.error(f"Error retrieving division Velneo ID: {e}")
+            return None
+        except Exception as e:
+            logging.error(f"Unexpected error retrieving division Velneo ID: {e}")
             return None
         finally:
             if cursor:
@@ -233,7 +240,7 @@ class VelneoMappings:
             
             query = """
             SELECT velneo FROM metodo_pago 
-            WHERE pvsi = %s
+            WHERE pvsi = ?
             LIMIT 1
             """
             
@@ -242,8 +249,11 @@ class VelneoMappings:
             
             return result[0] if result else None
             
-        except Exception as e:
+        except sqlite3.Error as e:
             logging.error(f"Error retrieving payment method Velneo ID: {e}")
+            return None
+        except Exception as e:
+            logging.error(f"Unexpected error retrieving payment method Velneo ID: {e}")
             return None
         finally:
             if cursor:
@@ -269,7 +279,7 @@ class VelneoMappings:
             
             query = """
             SELECT velneo FROM vendedores 
-            WHERE pvsi_clave = %s
+            WHERE pvsi_clave = ?
             LIMIT 1
             """
             
@@ -278,8 +288,11 @@ class VelneoMappings:
             
             return result[0] if result else None
             
-        except Exception as e:
+        except sqlite3.Error as e:
             logging.error(f"Error retrieving vendedor Velneo ID: {e}")
+            return None
+        except Exception as e:
+            logging.error(f"Unexpected error retrieving vendedor Velneo ID: {e}")
             return None
         finally:
             if cursor:
@@ -310,7 +323,7 @@ class VelneoMappings:
             
             query = """
             SELECT velneo FROM fpg_V 
-            WHERE pvsi = %s
+            WHERE pvsi = ?
             LIMIT 1
             """
             
@@ -319,8 +332,11 @@ class VelneoMappings:
             
             return result[0] if result else None
             
-        except Exception as e:
+        except sqlite3.Error as e:
             logging.error(f"Error retrieving payment method Velneo ID: {e}")
+            return None
+        except Exception as e:
+            logging.error(f"Unexpected error retrieving payment method Velneo ID: {e}")
             return None
         finally:
             if cursor:
@@ -343,7 +359,7 @@ class VelneoMappings:
             
             query = """
             SELECT id FROM pais 
-            WHERE description = %s
+            WHERE description = ?
             LIMIT 1
             """
             
@@ -352,8 +368,11 @@ class VelneoMappings:
             
             return result[0] if result else None
         
-        except Exception as e:
+        except sqlite3.Error as e:
             logging.error(f"Error retrieving pais ID: {e}")
+            return None
+        except Exception as e:
+            logging.error(f"Unexpected error retrieving pais ID: {e}")
             return None
         finally:
             if cursor:
@@ -376,7 +395,7 @@ class VelneoMappings:
             
             query = """
             SELECT velneo FROM tipo_movimiento 
-            WHERE pvsi = %s
+            WHERE pvsi = ?
             LIMIT 1
             """
             
@@ -385,8 +404,11 @@ class VelneoMappings:
             
             return result[0] if result else None
         
-        except Exception as e:
+        except sqlite3.Error as e:
             logging.error(f"Error retrieving tipo_movimiento Velneo ID: {e}")
+            return None
+        except Exception as e:
+            logging.error(f"Unexpected error retrieving tipo_movimiento Velneo ID: {e}")
             return None
         finally:
             if cursor:
@@ -409,7 +431,7 @@ class VelneoMappings:
             
             query = """
             SELECT velneo_id FROM articulos 
-            WHERE pvsi_clave = %s
+            WHERE pvsi_clave = ?
             LIMIT 1
             """
             
@@ -418,8 +440,11 @@ class VelneoMappings:
             
             return result[0] if result else None
         
-        except Exception as e:
+        except sqlite3.Error as e:
             logging.error(f"Error retrieving articulo Velneo ID: {e}")
+            return None
+        except Exception as e:
+            logging.error(f"Unexpected error retrieving articulo Velneo ID: {e}")
             return None
         finally:
             if cursor:
@@ -443,7 +468,7 @@ class VelneoMappings:
             
             query = """
             SELECT velneo FROM iva 
-            WHERE pvsi = %s
+            WHERE pvsi = ?
             LIMIT 1
             """
             
@@ -452,8 +477,11 @@ class VelneoMappings:
             
             return result[0] if result else None
         
-        except Exception as e:
+        except sqlite3.Error as e:
             logging.error(f"Error retrieving tipo_iva Velneo ID: {e}")
+            return None
+        except Exception as e:
+            logging.error(f"Unexpected error retrieving tipo_iva Velneo ID: {e}")
             return None
         finally:
             if cursor:
@@ -549,7 +577,7 @@ class VelneoMappings:
             
             query = """
             SELECT velneo FROM cja_bco_V
-            WHERE pvsi = %s
+            WHERE pvsi = ?
             LIMIT 1
             """
             
@@ -558,8 +586,11 @@ class VelneoMappings:
             
             return result[0] if result else None
         
-        except Exception as e:
+        except sqlite3.Error as e:
             logging.error(f"Error retrieving caja_banco Velneo ID: {e}")
+            return None
+        except Exception as e:
+            logging.error(f"Unexpected error retrieving caja_banco Velneo ID: {e}")
             return None
         finally:
             if cursor:
@@ -582,7 +613,7 @@ class VelneoMappings:
             
             query = """
             SELECT velneo FROM forma_pago 
-            WHERE pvsi = %s
+            WHERE pvsi = ?
             LIMIT 1
             """
             
@@ -591,8 +622,11 @@ class VelneoMappings:
             
             return result[0] if result else None
         
-        except Exception as e:
+        except sqlite3.Error as e:
             logging.error(f"Error retrieving forma_pago Velneo ID: {e}")
+            return None
+        except Exception as e:
+            logging.error(f"Unexpected error retrieving forma_pago Velneo ID: {e}")
             return None
         finally:
             if cursor:
@@ -616,7 +650,7 @@ class VelneoMappings:
             # Single query with a fallback to default_value if no match found
             query = """
             SELECT forma_pago FROM forma_pago_caja_banco 
-            WHERE caja_banco = %s
+            WHERE caja_banco = ?
             UNION ALL
             SELECT forma_pago FROM forma_pago_caja_banco 
             WHERE caja_banco = 'default_value'
@@ -628,8 +662,11 @@ class VelneoMappings:
             
             return result[0] if result else None
         
-        except Exception as e:
+        except sqlite3.Error as e:
             logging.error(f"Error retrieving forma_pago Velneo ID: {e}")
+            return None
+        except Exception as e:
+            logging.error(f"Unexpected error retrieving forma_pago Velneo ID: {e}")
             return None
         finally:
             if cursor:
@@ -653,7 +690,7 @@ class VelneoMappings:
             # Single query with a fallback to default_value if no match found
             query = """
             SELECT velneo FROM mpg_v 
-            WHERE pvsi = %s
+            WHERE pvsi = ?
             LIMIT 1
             """
             
@@ -662,8 +699,11 @@ class VelneoMappings:
             
             return result[0] if result else None
         
-        except Exception as e:
+        except sqlite3.Error as e:
             logging.error(f"Error retrieving forma_pago Velneo ID: {e}")
+            return None
+        except Exception as e:
+            logging.error(f"Unexpected error retrieving forma_pago Velneo ID: {e}")
             return None
         finally:
             if cursor:

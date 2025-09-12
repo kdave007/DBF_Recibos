@@ -1,9 +1,9 @@
-import psycopg2
-from psycopg2 import sql
+import sqlite3
 from datetime import datetime, date
 from typing import List, Dict, Optional
 import logging
 import pytz
+import json
 
 class DetailTracking:
     """Sistema de seguimiento para detalles de facturas"""
@@ -35,36 +35,51 @@ class DetailTracking:
             True si la operación fue exitosa, False en caso contrario
         """
         try:
-            # Connect with explicit parameters instead of using **
-            with psycopg2.connect(
-                host=self.config['host'],
-                database=self.config['database'],
-                user=self.config['user'],
-                password=self.config['password'],
-                port=self.config['port']
-            ) as conn:
-                with conn.cursor() as cursor:
-                    query = sql.SQL("""
+            # Connect to SQLite database
+            with sqlite3.connect(self.config['database']) as conn:
+                # Enable foreign keys
+                conn.execute("PRAGMA foreign_keys = ON")
+                
+                # Create cursor
+                cursor = conn.cursor()
+                
+                # Check if record exists
+                check_query = "SELECT id FROM detalle_estado WHERE id = ?"
+                cursor.execute(check_query, (id,))
+                existing_record = cursor.fetchone()
+                
+                if existing_record:
+                    # Update existing record
+                    update_query = """
+                        UPDATE detalle_estado
+                        SET estado = ?,
+                            accion = ?,
+                            hash_detalle = ?,
+                            ref = ?
+                        WHERE id = ?
+                    """
+                    cursor.execute(update_query, (estado, accion, hash_detalle, ref, id))
+                else:
+                    # Insert new record
+                    insert_query = """
                         INSERT INTO detalle_estado (
-                            id,folio, hash_detalle, fecha, estado, accion, ref
-                        ) VALUES (%s, %s, %s, %s, %s, %s)
-                        ON CONFLICT (id) 
-                        DO UPDATE SET 
-                            estado = EXCLUDED.estado,
-                            accion = EXCLUDED.accion,
-                            hash_detalle = EXCLUDED.hash_detalle,
-                            ref = EXCLUDED.ref
-                        RETURNING id
-                    """)
+                            id, folio, hash_detalle, fecha, estado, accion, ref
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                    """
+                    cursor.execute(insert_query, (id, folio, hash_detalle, fecha, estado, accion, ref))
+                
+                # Commit changes
+                conn.commit()
+                
+                # Check if operation was successful
+                cursor.execute("SELECT id FROM detalle_estado WHERE id = ?", (id,))
+                result = cursor.fetchone()
+                
+                return result is not None
                     
-                    params = (folio, hash_detalle, fecha, estado, accion, ref)
-                    
-                    cursor.execute(query, params)
-                    
-                    result = cursor.fetchone()
-                    conn.commit()
-                    return result is not None
-                    
+        except sqlite3.Error as e:
+            logging.error(f"SQLite error al insertar/actualizar detalle: {e}")
+            return False
         except Exception as e:
             logging.error(f"Error al insertar/actualizar detalle: {e}")
             return False
@@ -80,27 +95,31 @@ class DetailTracking:
             Lista de diccionarios con los detalles encontrados
         """
         try:
-            # Connect with explicit parameters instead of using **
-            with psycopg2.connect(
-                host=self.config['host'],
-                database=self.config['database'],
-                user=self.config['user'],
-                password=self.config['password'],
-                port=self.config['port']
-            ) as conn:
-                with conn.cursor() as cursor:
-                    query = sql.SQL("""
-                        SELECT id, folio, hash_detalle, fecha, estado, accion, ref
-                        FROM detalle_estado
-                        WHERE folio = %s
-                        ORDER BY id ASC
-                    """)
+            # Connect to SQLite database
+            with sqlite3.connect(self.config['database']) as conn:
+                # Enable foreign keys
+                conn.execute("PRAGMA foreign_keys = ON")
+                
+                # Create cursor and set row_factory to get dictionary-like results
+                conn.row_factory = sqlite3.Row
+                cursor = conn.cursor()
+                
+                query = """
+                    SELECT id, folio, hash_detalle, fecha, estado, accion, ref
+                    FROM detalle_estado
+                    WHERE folio = ?
+                    ORDER BY id ASC
+                """
+                
+                cursor.execute(query, (folio,))
+                
+                # Convert to list of dictionaries
+                results = [dict(row) for row in cursor.fetchall()]
+                return results
                     
-                    cursor.execute(query, (folio,))
-                    
-                    columns = [desc[0] for desc in cursor.description]
-                    return [dict(zip(columns, row)) for row in cursor.fetchall()]
-                    
+        except sqlite3.Error as e:
+            logging.error(f"SQLite error al obtener detalles por folio: {e}")
+            return []
         except Exception as e:
             logging.error(f"Error al obtener detalles por folio: {e}")
             return []
@@ -117,41 +136,42 @@ class DetailTracking:
             Lista de diccionarios con los detalles encontrados
         """
         try:
-            # Connect with explicit parameters instead of using **
-            with psycopg2.connect(
-                host=self.config['host'],
-                database=self.config['database'],
-                user=self.config['user'],
-                password=self.config['password'],
-                port=self.config['port']
-            ) as conn:
-                with conn.cursor() as cursor:
-                    query = sql.SQL("""
-                        SELECT id, folio, hash_detalle, fecha, estado, accion, ref
-                        FROM detalle_estado
-                        WHERE fecha BETWEEN %s AND %s
-                        ORDER BY fecha DESC, folio ASC
-                    """)
+            # Connect to SQLite database
+            with sqlite3.connect(self.config['database']) as conn:
+                # Enable foreign keys
+                conn.execute("PRAGMA foreign_keys = ON")
+                
+                # Create cursor and set row_factory to get dictionary-like results
+                conn.row_factory = sqlite3.Row
+                cursor = conn.cursor()
+                
+                query = """
+                    SELECT id, folio, hash_detalle, fecha, estado, accion, ref
+                    FROM detalle_estado
+                    WHERE fecha BETWEEN ? AND ?
+                    ORDER BY fecha DESC, folio ASC
+                """
+                
+                cursor.execute(query, (start_date, end_date))
+                
+                # Convert to list of dictionaries
+                results = [dict(row) for row in cursor.fetchall()]
+                return results
                     
-                    cursor.execute(query, (start_date, end_date))
-                    
-                    columns = [desc[0] for desc in cursor.description]
-                    return [dict(zip(columns, row)) for row in cursor.fetchall()]
-                    
+        except sqlite3.Error as e:
+            logging.error(f"SQLite error al obtener detalles por rango de fechas: {e}")
+            return []
         except Exception as e:
             logging.error(f"Error al obtener detalles por rango de fechas: {e}")
             return []
 
     def insert_details_on_wait(self, details: List[Dict], action, estado) -> bool:
         try:
-            with psycopg2.connect(
-                host=self.config['host'],
-                database=self.config['database'],
-                user=self.config['user'],
-                password=self.config['password'],
-                port=self.config['port']
-            ) as conn:
-
+            # Connect to SQLite database
+            with sqlite3.connect(self.config['database']) as conn:
+                # Enable foreign keys
+                conn.execute("PRAGMA foreign_keys = ON")
+                
                 deleted_count = 0
                 inserted_count = 0
                
@@ -159,48 +179,76 @@ class DetailTracking:
                     detail_id = detail.get('id')
                     
                     try:
-                        with conn.cursor() as cursor:
-
-                            # Upsert query - insert if not exists, update if exists based on folio and indice
-                            upsert_query = """
-                                INSERT INTO detalle_estado (
-                                    id, folio, hash_detalle, fecha, estado, accion, ref, indice
-                                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                                ON CONFLICT (folio, indice) DO UPDATE SET
-                                    id = EXCLUDED.id,
-                                    hash_detalle = EXCLUDED.hash_detalle,
-                                    fecha = EXCLUDED.fecha,
-                                    estado = EXCLUDED.estado,
-                                    accion = EXCLUDED.accion,
-                                    ref = EXCLUDED.ref
+                        cursor = conn.cursor()
+                        
+                        # Check if record exists with the same folio and indice
+                        check_query = "SELECT id FROM detalle_estado WHERE folio = ? AND indice = ?"
+                        cursor.execute(check_query, (detail.get('folio'), detail.get('indice')))
+                        existing_record = cursor.fetchone()
+                        
+                        if existing_record:
+                            # Update existing record
+                            update_query = """
+                                UPDATE detalle_estado
+                                SET id = ?,
+                                    hash_detalle = ?,
+                                    fecha = ?,
+                                    estado = ?,
+                                    accion = ?,
+                                    ref = ?
+                                WHERE folio = ? AND indice = ?
                             """
                             params = (
-                                    detail_id,  # Use the actual ID from the API
-                                    detail.get('folio'),
-                                    detail.get('detail_hash'),
-                                    detail.get('fecha'),
-                                    estado,
-                                    action,
-                                    detail.get('ref'),
-                                    detail.get('indice')
-                                )
-
-                            cursor.execute(upsert_query, params)
-                            inserted_count += 1
-
-                            print(f'detail_tracking :: INSERT REPLACE: ID={detail_id}, FOLIO={detail.get('folio')}, HASH={detail.get('detail_hash')}, '
-                            f'FECHA={detail.get('fecha')}, ESTADO={estado}, ACCION={action}, REF={detail.get('ref')}, INDICE={detail.get('indice')}')
-
+                                detail_id,
+                                detail.get('detail_hash'),
+                                detail.get('fecha'),
+                                estado,
+                                action,
+                                detail.get('ref'),
+                                detail.get('folio'),
+                                detail.get('indice')
+                            )
+                            cursor.execute(update_query, params)
+                        else:
+                            # Insert new record
+                            insert_query = """
+                                INSERT INTO detalle_estado (
+                                    id, folio, hash_detalle, fecha, estado, accion, ref, indice
+                                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                            """
+                            params = (
+                                detail_id,
+                                detail.get('folio'),
+                                detail.get('detail_hash'),
+                                detail.get('fecha'),
+                                estado,
+                                action,
+                                detail.get('ref'),
+                                detail.get('indice')
+                            )
+                            cursor.execute(insert_query, params)
+                        
+                        inserted_count += 1
+                        
+                        print(f'detail_tracking :: INSERT REPLACE: ID={detail_id}, FOLIO={detail.get("folio")}, HASH={detail.get("detail_hash")}, '
+                              f'FECHA={detail.get("fecha")}, ESTADO={estado}, ACCION={action}, REF={detail.get("ref")}, INDICE={detail.get("indice")}')
+                        
                         # Commit the transaction for this ID
                         conn.commit()
                         print(f"Successfully processed ID {detail_id}: deleted {deleted_count}, inserted {inserted_count}")
-
+                        
+                    except sqlite3.Error as e:
+                        logging.error(f"SQLite error in insert details on wait: {e}")
+                        return False
                     except Exception as e:
                         logging.error(f"DETAILS :: Error in insert details on wait: {e}")
                         return False
-
+                
                 return inserted_count > 0
-
+                
+        except sqlite3.Error as e:
+            logging.error(f"SQLite error in insert details on wait: {e}")
+            return False
         except Exception as e:
             logging.error(f"detail_tracking :: Error insert details on wait: {e}")
             return False
@@ -220,23 +268,19 @@ class DetailTracking:
         if not details:
             return True  # Nothing to process
         
-            
         try:
-            # Connect with explicit parameters instead of using **
-            with psycopg2.connect(
-                host=self.config['host'],
-                database=self.config['database'],
-                user=self.config['user'],
-                password=self.config['password'],
-                port=self.config['port']
-            ) as conn:
+            # Connect to SQLite database
+            with sqlite3.connect(self.config['database']) as conn:
+                # Enable foreign keys
+                conn.execute("PRAGMA foreign_keys = ON")
+                
                 # Group details by ID
                 print(f'DETAILS {details}')
 
                 details_by_id = {}
                 for detail in details:
                     print(f'batch_replace_by_id {detail}')
-                    detail_id = detail.get('id') or  detail.get('sql_id')#here goes the id not parent id
+                    detail_id = detail.get('id') or detail.get('sql_id')  # here goes the id not parent id
                     if detail_id:
                         if detail_id not in details_by_id:
                             details_by_id[detail_id] = []
@@ -249,74 +293,80 @@ class DetailTracking:
                 # Process each ID in a separate transaction
                 for detail_id, id_details in details_by_id.items():
                     try:
-                        # First delete all existing records for this ID
-                        with conn.cursor() as cursor:
-                            delete_query = "DELETE FROM detalle_estado WHERE id = %s"
-                            cursor.execute(delete_query, (detail_id,))
-                            deleted_count += cursor.rowcount
-                            print(f"Deleted {cursor.rowcount} existing records for ID {detail_id}")
-                            
-                        # Then insert all new records for this ID
-                        with conn.cursor() as cursor:
-                            # Insert query
-                            insert_query = """
-                                INSERT INTO detalle_estado (
-                                    id, folio, hash_detalle, fecha, estado, accion, ref
-                                ) VALUES (%s, %s, %s, %s, %s, %s, %s)
-                            """
-                            
-                            # Insert each detail (should be just one per ID)
-                            for detail in id_details:
-                                # Get the folio from the detail
-                                folio = detail.get('folio', '')
-                                
-                                # Get current date if fecha is not provided
-                                fecha = detail.get('fecha')
-                                if not fecha:
-                                    fecha = date.today()
-                                
-                                # Get the REF value
-                                ref_value = ''
-                                if 'REF' in detail:
-                                    ref_value = detail['REF']
-                                elif 'ref' in detail:
-                                    ref_value = detail['ref']
-                                
-                                # Extract values
-                                detail_hash = detail.get('hash_detail') or detail.get('hash_detalle') or detail.get('detail_hash')
-                              
-                                
-                                params = (
-                                    detail_id,  # Use the actual ID from the API
-                                    folio,
-                                    detail_hash,
-                                    fecha,
-                                    estado,
-                                    action,
-                                    ref_value
-                                )
-                                
-                                # Debug print
-                                # logging.warning(f'////// /////// //////CHECKING FOR BUG DUPLICATE ID...')
-                                logging.info(f'detail_tracking :: insert_details_on_wait: ID={detail_id}, FOLIO={folio}, HASH={detail_hash}, '
-                                       f'FECHA={fecha}, ESTADO={estado}, ACCION={action}, REF={ref_value}')
-                                
-                                cursor.execute(insert_query, params)
-                                inserted_count += 1
+                        cursor = conn.cursor()
                         
+                        # First delete all existing records for this ID
+                        delete_query = "DELETE FROM detalle_estado WHERE id = ?"
+                        cursor.execute(delete_query, (detail_id,))
+                        deleted_count += cursor.rowcount
+                        print(f"Deleted {cursor.rowcount} existing records for ID {detail_id}")
+                        
+                        # Then insert all new records for this ID
+                        # Insert query
+                        insert_query = """
+                            INSERT INTO detalle_estado (
+                                id, folio, hash_detalle, fecha, estado, accion, ref
+                            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                        """
+                        
+                        # Insert each detail (should be just one per ID)
+                        for detail in id_details:
+                            # Get the folio from the detail
+                            folio = detail.get('folio', '')
+                            
+                            # Get current date if fecha is not provided
+                            fecha = detail.get('fecha')
+                            if not fecha:
+                                fecha = date.today()
+                            
+                            # Get the REF value
+                            ref_value = ''
+                            if 'REF' in detail:
+                                ref_value = detail['REF']
+                            elif 'ref' in detail:
+                                ref_value = detail['ref']
+                            
+                            # Extract values
+                            detail_hash = detail.get('hash_detail') or detail.get('hash_detalle') or detail.get('detail_hash')
+                          
+                            params = (
+                                detail_id,  # Use the actual ID from the API
+                                folio,
+                                detail_hash,
+                                fecha,
+                                estado,
+                                action,
+                                ref_value
+                            )
+                            
+                            logging.info(f'detail_tracking :: insert_details_on_wait: ID={detail_id}, FOLIO={folio}, HASH={detail_hash}, '
+                                   f'FECHA={fecha}, ESTADO={estado}, ACCION={action}, REF={ref_value}')
+                            
+                            cursor.execute(insert_query, params)
+                            inserted_count += 1
+                    
                         # Commit the transaction for this ID
                         conn.commit()
                         print(f"Successfully processed ID {detail_id}: deleted {deleted_count}, inserted {inserted_count}")
                         
+                    except sqlite3.Error as e:
+                        # If anything goes wrong, rollback this ID's transaction
+                        conn.rollback()
+                        logging.error(f"SQLite error processing ID {detail_id}: {e}")
+                        inserted_count = 0
+                        # Continue with the next ID
                     except Exception as e:
                         # If anything goes wrong, rollback this ID's transaction
-                        conn.rollback()#TODO:comment this line <------------------------------------------------------------------
+                        conn.rollback()
                         logging.error(f"Error processing ID {detail_id}: {e}")
                         inserted_count = 0
                         # Continue with the next ID
                         
                 return inserted_count > 0
                 
+        except sqlite3.Error as e:
+            logging.error(f"SQLite error in batch_replace_by_id: {e}")
+            return False
         except Exception as e:
             logging.error(f"DETAILS :: Error in batch_replace_by_id: {e}")
             return False
@@ -337,109 +387,141 @@ class DetailTracking:
             return True  # Nothing to insert
             
         try:
-            # Connect with explicit parameters instead of using **
-            with psycopg2.connect(
-                host=self.config['host'],
-                database=self.config['database'],
-                user=self.config['user'],
-                password=self.config['password'],
-                port=self.config['port']
-            ) as conn:
+            # Connect to SQLite database
+            with sqlite3.connect(self.config['database']) as conn:
+                # Enable foreign keys
+                conn.execute("PRAGMA foreign_keys = ON")
+                
                 # First, get existing folios to determine starting counters
                 folio_counters = {}
                 
                 try:
-                    with conn.cursor() as cursor:
-                        # Query to get max index for each folio
-                        count_query = """
-                            SELECT folio, MAX(CAST(SPLIT_PART(id, '-', 2) AS INTEGER)) as max_index
-                            FROM detalle_estado
-                            GROUP BY folio
-                        """
-                        cursor.execute(count_query)
-                        
-                        # Initialize counters based on existing data
-                        for row in cursor.fetchall():
-                            folio, max_index = row
-                            folio_counters[folio] = max_index
+                    cursor = conn.cursor()
+                    # Query to get max index for each folio - SQLite doesn't have SPLIT_PART
+                    # We'll use a different approach to extract the index
+                    count_query = """
+                        SELECT folio, MAX(SUBSTR(id, INSTR(id, '-') + 1)) as max_index
+                        FROM detalle_estado
+                        GROUP BY folio
+                    """
+                    cursor.execute(count_query)
+                    
+                    # Initialize counters based on existing data
+                    for row in cursor.fetchall():
+                        folio, max_index = row
+                        try:
+                            folio_counters[folio] = int(max_index) if max_index else 0
+                        except (ValueError, TypeError):
+                            folio_counters[folio] = 0
+                except sqlite3.Error as e:
+                    logging.warning(f"SQLite error retrieving existing counters: {e}")
                 except Exception as e:
                     logging.warning(f"Could not retrieve existing counters: {e}")
                 
                 # Continue with inserts
-                with conn.cursor() as cursor:
-                    query = sql.SQL("""
-                        INSERT INTO detalle_estado (
-                            id, folio, hash_detalle, fecha, estado, accion, ref
-                        ) VALUES (%s, %s, %s, %s, %s, %s, %s)
-                        ON CONFLICT (folio, ref) DO UPDATE SET
-                            estado = EXCLUDED.estado,
-                            accion = EXCLUDED.accion,
-                            hash_detalle = EXCLUDED.hash_detalle,
-                            ref = EXCLUDED.ref
-                    """)
+                cursor = conn.cursor()
+                
+                # Track successful inserts
+                success_count = 0
+                
+                for detail in details:
+                    print(f' $$$$ inserting record detail : {detail}')
+                    folio = detail.get('folio')
+                    print(f"checkpoint______________________________")
                     
-                    # Track successful inserts
-                    success_count = 0
+                    # Initialize counter for this folio if not exists
+                    if folio not in folio_counters:
+                        folio_counters[folio] = 0
                     
-                    for detail in details:
-                        print(f' $$$$ inserting record detail : {detail}')
-                        folio = detail.get('folio')
-                        print(f"checkpoint______________________________")
-                        # Initialize counter for this folio if not exists
-                        if folio not in folio_counters:
-                            folio_counters[folio] = 0
+                    # Increment counter for this folio
+                    folio_counters[folio] += 1
+                    
+                    # Get ID from detail
+                    detail_id = detail.get('id')
+                    
+                    # Get current date if fecha is not provided
+                    fecha = detail.get('fecha')
+                    if not fecha:
+                        fecha = date.today()
+                    
+                    # Get the REF value - check both 'REF' and 'ref' keys to handle case sensitivity
+                    ref_value = ''
+                    if 'REF' in detail:
+                        ref_value = detail['REF']
+                    elif 'ref' in detail:
+                        ref_value = detail['ref']
+                    
+                    # Extract values for better debugging
+                    detail_hash = detail.get('detail_hash') or detail.get('hash_detalle')
+                    estado = detail.get('estado', 'completado')
+                    operation = detail.get('operation') or detail.get('accion', 'create')
+                    
+                    try:
+                        # Check if record exists with the same folio and ref
+                        check_query = "SELECT id FROM detalle_estado WHERE folio = ? AND ref = ?"
+                        cursor.execute(check_query, (folio, ref_value))
+                        existing_record = cursor.fetchone()
                         
-                        # Increment counter for this folio
-                        folio_counters[folio] += 1
+                        if existing_record:
+                            # Update existing record
+                            update_query = """
+                                UPDATE detalle_estado
+                                SET estado = ?,
+                                    accion = ?,
+                                    hash_detalle = ?,
+                                    ref = ?
+                                WHERE folio = ? AND ref = ?
+                            """
+                            params = (
+                                estado,
+                                operation,
+                                detail_hash,
+                                ref_value,
+                                folio,
+                                ref_value
+                            )
+                            cursor.execute(update_query, params)
+                        else:
+                            # Insert new record
+                            insert_query = """
+                                INSERT INTO detalle_estado (
+                                    id, folio, hash_detalle, fecha, estado, accion, ref
+                                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                            """
+                            params = (
+                                detail_id,
+                                folio,
+                                detail_hash,
+                                fecha,
+                                estado,
+                                operation,
+                                ref_value
+                            )
+                            cursor.execute(insert_query, params)
                         
-                        # Create composite ID from folio and index
-                        id = detail['id']
-                        
-                        # Get current date if fecha is not provided
-                        fecha = detail.get('fecha')
-                        if not fecha:
-                            fecha = date.today()
-                        
-                        # Get the REF value - check both 'REF' and 'ref' keys to handle case sensitivity
-                        ref_value = ''
-                        if 'REF' in detail:
-                            ref_value = detail['REF']
-                        elif 'ref' in detail:
-                            ref_value = detail['ref']
-                        
-                        # Extract values for better debugging
-                        detail_hash = detail.get('detail_hash') or detail.get('hash_detalle')
-                        estado = detail.get('estado', 'completado')
-                        operation = detail.get('operation') or detail.get('accion', 'create')
-                        
-                        params = (
-                            id,
-                            folio,
-                            detail_hash,
-                            fecha,
-                            estado,
-                            operation,
-                            ref_value
-                        )
-                        
-                        # Detailed debug print to identify null values
-                        print(f'DEBUG INSERT: ID={composite_id}, FOLIO={folio}, HASH={detail_hash}, '
+                        # Detailed debug print to identify values
+                        print(f'DEBUG INSERT: ID={detail_id}, FOLIO={folio}, HASH={detail_hash}, '
                               f'FECHA={fecha}, ESTADO={estado}, ACCION={operation}, REF={ref_value}')
                         print(f'ORIGINAL DETAIL: {detail}')
                         
-                        try:
-                            cursor.execute(query, params)
-                            success_count += 1
-                        except Exception as e:
-                            # Log the error but continue with other records
-                            success_count = 0
-                            logging.error(f"DETAILS :: Error inserting record {composite_id}: {e}")
-                            conn.rollback()
-                            continue
-                    
-                    conn.commit()
-                    return success_count > 0
-                    
+                        success_count += 1
+                    except sqlite3.Error as e:
+                        # Log the error but continue with other records
+                        logging.error(f"SQLite error inserting record {detail_id}: {e}")
+                        conn.rollback()
+                        continue
+                    except Exception as e:
+                        # Log the error but continue with other records
+                        logging.error(f"DETAILS :: Error inserting record {detail_id}: {e}")
+                        conn.rollback()
+                        continue
+                
+                conn.commit()
+                return success_count > 0
+                
+        except sqlite3.Error as e:
+            logging.error(f"SQLite error al insertar detalles en lote: {e}")
+            return False
         except Exception as e:
             logging.error(f"DETAILS :: Error al insertar detalles en lote: {e}")
             return False
@@ -456,28 +538,30 @@ class DetailTracking:
             True si la operación fue exitosa, False en caso contrario
         """
         try:
-            # Connect with explicit parameters instead of using **
-            with psycopg2.connect(
-                host=self.config['host'],
-                database=self.config['database'],
-                user=self.config['user'],
-                password=self.config['password'],
-                port=self.config['port']
-            ) as conn:
-                with conn.cursor() as cursor:
-                    query = sql.SQL("""
-                        DELETE FROM detalle_estado
-                        WHERE folio = %s
-                    """)
-                    
-                    cursor.execute(query, (folio,))
-                    
-                    # Get number of rows affected
-                    rows_deleted = cursor.rowcount
-                    conn.commit()
-                    
-                    return rows_deleted > 0
-                    
+            # Connect to SQLite database
+            with sqlite3.connect(self.config['database']) as conn:
+                # Enable foreign keys
+                conn.execute("PRAGMA foreign_keys = ON")
+                
+                # Create cursor
+                cursor = conn.cursor()
+                
+                query = """
+                    DELETE FROM detalle_estado
+                    WHERE folio = ?
+                """
+                
+                cursor.execute(query, (folio,))
+                
+                # Get number of rows affected
+                rows_deleted = cursor.rowcount
+                conn.commit()
+                
+                return rows_deleted > 0
+                
+        except sqlite3.Error as e:
+            logging.error(f"SQLite error al eliminar registros por folio: {e}")
+            return False
         except Exception as e:
             logging.error(f"Error al eliminar registros por folio: {e}")
             return False
@@ -493,28 +577,30 @@ class DetailTracking:
             True si la operación fue exitosa, False en caso contrario
         """
         try:
-            # Connect with explicit parameters instead of using **
-            with psycopg2.connect(
-                host=self.config['host'],
-                database=self.config['database'],
-                user=self.config['user'],
-                password=self.config['password'],
-                port=self.config['port']
-            ) as conn:
-                with conn.cursor() as cursor:
-                    query = sql.SQL("""
-                        DELETE FROM detalle_estado
-                        WHERE id = %s
-                    """)
-                    
-                    cursor.execute(query, (id,))
-                    
-                    # Get number of rows affected
-                    rows_deleted = cursor.rowcount
-                    conn.commit()
-                    
-                    return rows_deleted > 0
-                    
+            # Connect to SQLite database
+            with sqlite3.connect(self.config['database']) as conn:
+                # Enable foreign keys
+                conn.execute("PRAGMA foreign_keys = ON")
+                
+                # Create cursor
+                cursor = conn.cursor()
+                
+                query = """
+                    DELETE FROM detalle_estado
+                    WHERE id = ?
+                """
+                
+                cursor.execute(query, (id,))
+                
+                # Get number of rows affected
+                rows_deleted = cursor.rowcount
+                conn.commit()
+                
+                return rows_deleted > 0
+                
+        except sqlite3.Error as e:
+            logging.error(f"SQLite error al eliminar registro por ID: {e}")
+            return False
         except Exception as e:
             logging.error(f"Error al eliminar registro por ID: {e}")
             return False

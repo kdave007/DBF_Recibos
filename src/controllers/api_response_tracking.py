@@ -1,7 +1,7 @@
 import os
 import sys
 from datetime import datetime, date
-from src.config.db_config import PostgresConnection
+from src.config.db_config import SQLiteConnection
 from src.db.response_tracking import ResponseTracking
 from src.db.detail_tracking import DetailTracking
 from src.db.receipt_tracking import ReceiptTracking
@@ -9,7 +9,7 @@ from src.db.receipt_tracking import ReceiptTracking
 
 class APIResponseTracking:
     def __init__(self):
-        self.db_config = PostgresConnection.get_db_config()
+        self.db_config = SQLiteConnection.get_db_config()
         
         # Initialize ResponseTracking with the configuration dictionary
         self.resp_tracking = ResponseTracking(self.db_config)

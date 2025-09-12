@@ -1,9 +1,9 @@
-import psycopg2
-from psycopg2 import sql
+import sqlite3
 from datetime import datetime, date
 from typing import List, Dict, Optional
 import logging
 import pytz
+import json
 
 class RetriesTracking:
     """Sistema de seguimiento para detalles de facturas"""
@@ -23,45 +23,60 @@ class RetriesTracking:
             bool: True if the operation was successful, False otherwise
         """
         try:
-            # Connect with explicit parameters
-            with psycopg2.connect(
-                host=self.config['host'],
-                database=self.config['database'],
-                user=self.config['user'],
-                password=self.config['password'],
-                port=self.config['port']
-            ) as conn:
-                with conn.cursor() as cursor:
-                    # Insert or update if exists
-                    query = sql.SQL("""
+            # Connect to SQLite database
+            with sqlite3.connect(self.config['database']) as conn:
+                # Enable foreign keys
+                conn.execute("PRAGMA foreign_keys = ON")
+                
+                # Create cursor
+                cursor = conn.cursor()
+                
+                # Always start with intentos = 1 for new records
+                # Use current date if fecha_registro is not provided
+                if fecha_registro is None:
+                    fecha_registro = date.today()
+                
+                # Check if record exists
+                check_query = "SELECT folio, intentos FROM reintentos_fac_venta WHERE folio = ?"
+                cursor.execute(check_query, (folio,))
+                existing_record = cursor.fetchone()
+                
+                if existing_record:
+                    # Update existing record
+                    update_query = """
+                        UPDATE reintentos_fac_venta
+                        SET intentos = intentos + 1,
+                            completado = ?,
+                            fecha_del_registro = ?
+                        WHERE folio = ?
+                    """
+                    cursor.execute(update_query, (completado, fecha_registro, folio))
+                else:
+                    # Insert new record
+                    insert_query = """
                         INSERT INTO reintentos_fac_venta (
                             folio, intentos, completado, fecha_del_registro
-                        ) VALUES (%s, %s, %s, %s)
-                        ON CONFLICT (folio) DO UPDATE SET
-                            intentos = reintentos_fac_venta.intentos + 1,
-                            completado = EXCLUDED.completado,
-                            fecha_del_registro = EXCLUDED.fecha_del_registro
-                        RETURNING folio
-                    """)
-                    
-                    # Always start with intentos = 1 for new records
-                    # Use current date if fecha_registro is not provided
-                    if fecha_registro is None:
-                        fecha_registro = date.today()
-                    
-                    params = (folio, 1, completado, fecha_registro)
-                    
-                    cursor.execute(query, params)
-                    result = cursor.fetchone()
-                    conn.commit()
-                    
-                    if result:
-                        print(f"Successfully inserted/updated retry tracking for folio {folio}")
-                        return True
-                    else:
-                        print(f"Failed to insert/update retry tracking for folio {folio}")
-                        return False
+                        ) VALUES (?, ?, ?, ?)
+                    """
+                    cursor.execute(insert_query, (folio, 1, completado, fecha_registro))
+                
+                # Commit changes
+                conn.commit()
+                
+                # Check if operation was successful
+                cursor.execute("SELECT folio FROM reintentos_fac_venta WHERE folio = ?", (folio,))
+                result = cursor.fetchone()
+                
+                if result:
+                    print(f"Successfully inserted/updated retry tracking for folio {folio}")
+                    return True
+                else:
+                    print(f"Failed to insert/update retry tracking for folio {folio}")
+                    return False
                         
+        except sqlite3.Error as e:
+            logging.error(f"SQLite error in retry tracking for folio {folio}: {e}")
+            return False
         except Exception as e:
             logging.error(f"Error in retry tracking for folio {folio}: {e}")
             return False
@@ -77,35 +92,37 @@ class RetriesTracking:
             list: List of folios that meet the criteria
         """
         try:
-            # Connect with explicit parameters
-            with psycopg2.connect(
-                host=self.config['host'],
-                database=self.config['database'],
-                user=self.config['user'],
-                password=self.config['password'],
-                port=self.config['port']
-            ) as conn:
-                with conn.cursor() as cursor:
-                    # Select folios within date range
-                    query = sql.SQL("""
-                        SELECT folio 
-                        FROM reintentos_fac_venta
-                        WHERE fecha_del_registro BETWEEN %s AND %s
-                        AND intentos >= 3
-                        AND completado = false
-                        ORDER BY folio
-                    """)
+            # Connect to SQLite database
+            with sqlite3.connect(self.config['database']) as conn:
+                # Enable foreign keys
+                conn.execute("PRAGMA foreign_keys = ON")
+                
+                # Create cursor
+                cursor = conn.cursor()
+                
+                # Select folios within date range
+                query = """
+                    SELECT folio 
+                    FROM reintentos_fac_venta
+                    WHERE fecha_del_registro BETWEEN ? AND ?
+                    AND intentos >= 3
+                    AND completado = 0
+                    ORDER BY folio
+                """
+                
+                params = (start_date, end_date)
+                cursor.execute(query, params)
+                
+                # Fetch all results and extract folios
+                results = cursor.fetchall()
+                folios = [row[0] for row in results]
+                
+                print(f"Found {len(folios)} folios to ignore in date range {start_date} to {end_date}")
+                return folios
                     
-                    params = (start_date, end_date)
-                    cursor.execute(query, params)
-                    
-                    # Fetch all results and extract folios
-                    results = cursor.fetchall()
-                    folios = [row[0] for row in results]
-                    
-                    print(f"Found {len(folios)} folios to ignore in date range {start_date} to {end_date}")
-                    return folios
-                        
+        except sqlite3.Error as e:
+            logging.error(f"SQLite error getting ignore list: {e}")
+            return []
         except Exception as e:
             logging.error(f"Error getting ignore list: {e}")
             return []
@@ -120,36 +137,39 @@ class RetriesTracking:
             bool: True if the update was successful, False otherwise
         """
         try:
-            # Connect with explicit parameters
-            with psycopg2.connect(
-                host=self.config['host'],
-                database=self.config['database'],
-                user=self.config['user'],
-                password=self.config['password'],
-                port=self.config['port']
-            ) as conn:
-                with conn.cursor() as cursor:
-                    # Update completado to True for the specified folio
-                    query = sql.SQL("""
-                        UPDATE reintentos_fac_venta
-                        SET completado = true
-                        WHERE folio = %s
-                        RETURNING folio
-                    """)
+            # Connect to SQLite database
+            with sqlite3.connect(self.config['database']) as conn:
+                # Enable foreign keys
+                conn.execute("PRAGMA foreign_keys = ON")
+                
+                # Create cursor
+                cursor = conn.cursor()
+                
+                # Update completado to True (1 in SQLite) for the specified folio
+                query = """
+                    UPDATE reintentos_fac_venta
+                    SET completado = 1
+                    WHERE folio = ?
+                """
+                
+                cursor.execute(query, (folio,))
+                conn.commit()
+                
+                # Check if any rows were affected
+                rows_affected = cursor.rowcount
+                
+                # Even if no record was found, we consider this a success
+                # since we're calling this method after successful processing
+                if rows_affected > 0:
+                    print(f"Successfully marked folio {folio} as completed")
+                else:
+                    print(f"No retry record found for folio {folio} - this is normal if it was processed on first try")
+                
+                return True
                     
-                    cursor.execute(query, (folio,))
-                    result = cursor.fetchone()
-                    conn.commit()
-                    
-                    # Even if no record was found, we consider this a success
-                    # since we're calling this method after successful processing
-                    if result:
-                        print(f"Successfully marked folio {folio} as completed")
-                    else:
-                        print(f"No retry record found for folio {folio} - this is normal if it was processed on first try")
-                    
-                    return True
-                        
+        except sqlite3.Error as e:
+            logging.error(f"SQLite error marking folio {folio} as completed: {e}")
+            return False
         except Exception as e:
             logging.error(f"Error marking folio {folio} as completed: {e}")
             return False

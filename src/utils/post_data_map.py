@@ -5,7 +5,7 @@ from typing import Dict, Any, Optional
 import logging
 import sys
 from src.db.velneo_mappings import VelneoMappings
-from src.config.db_config import PostgresConnection
+from src.config.db_config import SQLiteConnection
 
 class DataMap:
     """Class for mapping DBF data to API format using database lookups
@@ -21,7 +21,7 @@ class DataMap:
             db_config: Optional database configuration dictionary. If not provided, 
                        config from PostgresConnection will be used.
         """
-        self.db_config = db_config or PostgresConnection.get_db_config()
+        self.db_config = db_config or SQLiteConnection.get_db_config()
         self.velneo_mappings = VelneoMappings(self.db_config)
     
     def apply_map_serie(self, ref) -> Optional[int]:

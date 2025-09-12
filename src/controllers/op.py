@@ -2,7 +2,7 @@
 from .send_request import SendRequest
 from .send_details import SendDetails
 from .api_response_tracking import APIResponseTracking
-from src.config.db_config import PostgresConnection
+from src.config.db_config import SQLiteConnection
 from src.db.retries_tracking import RetriesTracking
 from src.db.error_tracking import ErrorTracking
 from datetime import datetime, date
@@ -25,7 +25,7 @@ class OP:
         self.send_req = SendRequest()
         self.send_det = SendDetails()
         self.api_track = APIResponseTracking()
-        self.db_config = PostgresConnection.get_db_config()
+        self.db_config = SQLiteConnection.get_db_config()
         self.retries_track = RetriesTracking(self.db_config)
         self.error = ErrorTracking(self.db_config)
         self.env = EncEnv()
@@ -75,7 +75,7 @@ class OP:
                 # Make the first API call
             waiting_line_result = self.send_req.waiting_line(record, base_url, api_key)
 
-            print(f"waiting line result : {waiting_line_result}")
+            # print(f"waiting line result : {waiting_line_result}")
 
             # Check if the first request was successful
             if waiting_line_result['success']:

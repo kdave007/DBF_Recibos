@@ -38,8 +38,8 @@ class WorkFlow:
         
 
 
-        # print("STOP")
-        # sys.exit()
+        print("STOP")
+        sys.exit()
 
         
         # sample = {

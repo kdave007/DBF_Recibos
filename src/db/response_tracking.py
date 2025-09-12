@@ -1,177 +1,187 @@
-import psycopg2
-from psycopg2 import sql
+import sqlite3
 from datetime import datetime, date
 from typing import List, Dict, Optional
 import logging
 import pytz
+from src.db.db_connection_pool import DBConnectionPool
 
 class ResponseTracking:
     def __init__(self, db_config: dict):
-        self.config = db_config 
+        self.config = db_config
+        # Initialize the connection pool
+        self.pool = DBConnectionPool(db_config, min_conn=2, max_conn=10)
 
     def delete_by_id(self, id) -> bool:
         """Delete a record from estado_factura_venta by ID"""
+        conn = None
+        cursor = None
         try:
-            # Connect with explicit parameters instead of using **
-            with psycopg2.connect(
-                host=self.config['host'],
-                database=self.config['database'],
-                user=self.config['user'],
-                password=self.config['password'],
-                port=self.config['port']
-            ) as conn:
-                with conn.cursor() as cursor:
-                    # Delete record by ID
-                    query = sql.SQL("""
-                        DELETE FROM estado_factura_venta
-                        WHERE id = %s
-                        RETURNING id
-                    """)
-                    
-                    cursor.execute(query, (id,))
-                    deleted_id = cursor.fetchone()
-                    conn.commit()
-                    
-                    if deleted_id:
-                        print(f"Successfully deleted record with ID {id}")
-                        return True
-                    else:
-                        print(f"No record found with ID {id}")
-                        return False
+            # Get connection from pool
+            conn = self.pool.get_connection()
+            if not conn:
+                logging.error("Could not get database connection from pool")
+                return False
+                
+            cursor = conn.cursor()
+            
+            # Delete record by ID
+            query = """
+                DELETE FROM estado_factura_venta
+                WHERE id = ?
+                RETURNING id
+            """
+            
+            cursor.execute(query, (id,))
+            deleted_id = cursor.fetchone()
+            conn.commit()
+            
+            if deleted_id:
+                print(f"Successfully deleted record with ID {id}")
+                return True
+            else:
+                print(f"No record found with ID {id}")
+                return False
                         
-        except Exception as e:
-            print(f"Error deleting record with ID {id}: {e}")
+        except sqlite3.Error as e:
+            logging.error(f"SQLite error deleting record with ID {id}: {e}")
             return False
+        except Exception as e:
+            logging.error(f"Error deleting record with ID {id}: {e}")
+            return False
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                self.pool.release_connection(conn)
 
     def insert_fac(self, 
-                        id ,
+                        id,
                         folio: str, 
                         total_partidas: int,
                         hash: str,
                         estado: str,
                         accion: str,
                         fecha_emision: date,
-                        total_recibos : int,
-                        id_cola : int,
-                        tipo_doc : str,
+                        total_recibos: int,
+                        id_cola: int,
+                        tipo_doc: str,
                         ) -> bool:
-        """Actualiza o inserta estado de factura"""
+        """Inserta estado de factura"""
+        conn = None
+        cursor = None
         try:
-            # Connect with explicit parameters instead of using **
-            with psycopg2.connect(
-                host=self.config['host'],
-                database=self.config['database'],
-                user=self.config['user'],
-                password=self.config['password'],
-                port=self.config['port']
-            ) as conn:
-                with conn.cursor() as cursor:
-                    # Insert o update si existe
-                    # query = sql.SQL("""
-                    #     INSERT INTO estado_factura_venta (
-                    #         id,folio, total_partidas, hash,
-                    #         fecha_procesamiento, estado, fecha_emision, accion
-                    #     ) VALUES (%s,%s, %s, %s, %s, %s, %s, %s)
-                    #     ON CONFLICT (id) DO UPDATE SET
-                    #         estado = EXCLUDED.estado,
-                    #         hash = EXCLUDED.hash,
-                    #         accion = EXCLUDED.accion,
-                    #         fecha_procesamiento = %s,
-                    #         total_partidas = EXCLUDED.total_partidas,
-                    #         fecha_emision = EXCLUDED.fecha_emision
-                    #     RETURNING id
-                    # """)
-                    
-                    #INSERT ONLY
-                    query = sql.SQL("""
-                        INSERT INTO estado_factura_venta (
-                            id, folio, total_partidas, hash,
-                            fecha_procesamiento, estado, fecha_emision, accion, total_recibos, id_cola, tipo_doc
-                        ) VALUES (%s,%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                        RETURNING id
-                    """)
-                    
-                    current_date = datetime.now().date()
-                    params = (
-                        id,
-                        folio, 
-                        total_partidas, 
-                        hash, 
-                        current_date, 
-                        estado, 
-                        fecha_emision, 
-                        accion,
-                        total_recibos,
-                        id_cola,
-                        tipo_doc
-                    )
-                    #print(f"\nSQL Operation for folio: {folio}")
-                    #print(f"Parameters: {params}")
-                    
-                    cursor.execute(query, params)
-                    
-                    # Si se insertó, retornará el id
-                    result = cursor.fetchone()
-                    #print(f"SQL Result: {result}")
-                    
-                    if result:
-                        print(f"Operation successful for folio {folio} - hash: {hash}")
-                        conn.commit()
-                        return True
-                    
-                    print(f"Operation failed for folio {folio}")
-                    return False
-        except Exception as e:
-            logging.error(f"Error insertando estado: {e}")
+            # Get connection from pool
+            conn = self.pool.get_connection()
+            if not conn:
+                logging.error("Could not get database connection from pool")
+                return False
+                
+            cursor = conn.cursor()
+            
+            current_date = datetime.now().date()
+            
+            # Insert new record - direct insert without checking
+            query = """
+                INSERT INTO estado_factura_venta (
+                    id, folio, total_partidas, hash,
+                    fecha_procesamiento, estado, fecha_emision, accion, total_recibos, id_cola, tipo_doc
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                RETURNING id
+            """
+            params = (
+                id,
+                folio, 
+                total_partidas, 
+                hash, 
+                current_date, 
+                estado, 
+                fecha_emision, 
+                accion,
+                total_recibos,
+                id_cola,
+                tipo_doc
+            )
+            
+            cursor.execute(query, params)
+            result = cursor.fetchone()
+            conn.commit()
+            
+            if result:
+                print(f"Operation successful for folio {folio} - hash: {hash}")
+                return True
+            
+            print(f"Operation failed for folio {folio}")
             return False
             
+        except sqlite3.Error as e:
+            logging.error(f"SQLite error inserting/updating record: {e}")
+            return False
+        except Exception as e:
+            logging.error(f"Error inserting/updating record: {e}")
+            return False
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                self.pool.release_connection(conn)
+            
     def update_head_status(self, folio, new_id: int, estado: str, accion: str, tipo_doc: str) -> bool:
-        """Update only the estado and accion fields for a record by its ID
+        """Update only the estado and accion fields for a record by its folio
         
         Args:
-            id: The ID of the record to update
+            folio: The folio of the record to update
+            new_id: The new ID value
             estado: The new estado value
             accion: The new accion value
+            tipo_doc: The document type
             
         Returns:
             bool: True if the update was successful, False otherwise
         """
+        conn = None
+        cursor = None
         try:
-            # Connect with explicit parameters
-            with psycopg2.connect(
-                host=self.config['host'],
-                database=self.config['database'],
-                user=self.config['user'],
-                password=self.config['password'],
-                port=self.config['port']
-            ) as conn:
-                with conn.cursor() as cursor:
-                    # Update only estado and accion fields
-                    query = sql.SQL("""
-                        UPDATE estado_factura_venta 
-                        SET estado = %s, 
-                            accion = %s,
-                            id = %s
-                        WHERE folio = %s AND tipo_doc = %s
-                        RETURNING id
-                    """)
-                    
-                    # Execute the query with current timestamp
-                    current_date = datetime.now()
-                    cursor.execute(query, (estado, accion, new_id, folio, tipo_doc))
-                    updated_id = cursor.fetchone()
-                    conn.commit()
-                    
-                    if updated_id:
-                        logging.info(f"Successfully updated status for record with ID {id}")
-                        return True
-                    else:
-                        logging.warning(f"No record found with ID {id}")
-                        return False
-                        
-        except Exception as e:
-            logging.error(f"response_tracking :: Error updating status for record with ID {id}: {e}")
+            # Get connection from pool
+            conn = self.pool.get_connection()
+            if not conn:
+                logging.error("Could not get database connection from pool")
+                return False
+                
+            cursor = conn.cursor()
+            
+            # Update only estado, accion and id fields
+            query = """
+                UPDATE estado_factura_venta 
+                SET estado = ?, 
+                    accion = ?,
+                    id = ?
+                WHERE folio = ? AND tipo_doc = ?
+                RETURNING id
+            """
+            
+            # Execute the query
+            cursor.execute(query, (estado, accion, new_id, folio, tipo_doc))
+            updated_id = cursor.fetchone()
+            conn.commit()
+            
+            if updated_id:
+                logging.info(f"Successfully updated status for record with folio {folio}")
+                return True
+            else:
+                logging.warning(f"No record found with folio {folio}")
+                return False
+                
+        except sqlite3.Error as e:
+            logging.error(f"SQLite error updating status for record with folio {folio}: {e}")
             return False
+        except Exception as e:
+            logging.error(f"Error updating status for record with folio {folio}: {e}")
+            return False
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                self.pool.release_connection(conn)
 
 
     def update_detail_status(self, details) -> bool:
@@ -190,52 +200,60 @@ class ResponseTracking:
         success_count = 0
         total_count = len(details)
         
+        conn = None
+        cursor = None
         try:
-            # Connect with explicit parameters
-            with psycopg2.connect(
-                host=self.config['host'],
-                database=self.config['database'],
-                user=self.config['user'],
-                password=self.config['password'],
-                port=self.config['port']
-            ) as conn:
-                with conn.cursor() as cursor:
-                    # Process each detail record
-                    for record in details:
+            # Get connection from pool
+            conn = self.pool.get_connection()
+            if not conn:
+                logging.error("Could not get database connection from pool")
+                return False
+                
+            cursor = conn.cursor()
+            
+            # Process each detail record
+            for record in details:
+                print(f' //////////      insert this record {record}')
+                estado = record.get('estado')
+                folio = record.get('folio')
+                new_id = record.get('id')
+                indice = record.get('indice')
+                
+                if not all([estado, folio, new_id, indice]):
+                    logging.warning(f"Missing required fields in detail record: {record}")
+                    continue
 
-                        print(f' //////////      insert this record {record}')
-                        estado = record.get('estado')
-                        folio = record.get('folio')
-                        new_id = record.get('id')
-                        indice = record.get('indice')
-                        
-                        if not all([estado, folio, new_id, indice]):
-                            logging.warning(f"Missing required fields in detail record: {record}")
-                            continue
-
-                        query = sql.SQL("""
-                            UPDATE detalle_estado
-                            SET estado = %s, 
-                                id = %s
-                            WHERE folio = %s AND indice = %s
-                            RETURNING id
-                        """)
-                        
-                        cursor.execute(query, (estado, new_id, folio, indice))
-                        updated_id = cursor.fetchone()
-                        conn.commit()
-                        
-                        if updated_id:
-                            logging.info(f"Successfully updated detail status for folio {folio}, indice {indice}")
-                            success_count += 1
-                        else:
-                            logging.warning(f"No detail record found for folio {folio}, indice {indice}")
-                    
-                    return success_count == total_count  # Return True only if all updates succeeded
-                        
-        except Exception as e:
-            logging.error(f"response_tracking :: Error updating detail statuses: {e}")
+                query = """
+                    UPDATE detalle_estado
+                    SET estado = ?, 
+                        id = ?
+                    WHERE folio = ? AND indice = ?
+                    RETURNING id
+                """
+                
+                cursor.execute(query, (estado, new_id, folio, indice))
+                updated_id = cursor.fetchone()
+                conn.commit()
+                
+                if updated_id:
+                    logging.info(f"Successfully updated detail status for folio {folio}, indice {indice}")
+                    success_count += 1
+                else:
+                    logging.warning(f"No detail record found for folio {folio}, indice {indice}")
+            
+            return success_count == total_count  # Return True only if all updates succeeded
+                
+        except sqlite3.Error as e:
+            logging.error(f"SQLite error updating detail statuses: {e}")
             return False
+        except Exception as e:
+            logging.error(f"Error updating detail statuses: {e}")
+            return False
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                self.pool.release_connection(conn)
 
     
     def update_receipt_status(self, receipts) -> bool:
@@ -254,47 +272,56 @@ class ResponseTracking:
         success_count = 0
         total_count = len(receipts)
         
+        conn = None
+        cursor = None
         try:
-            # Connect with explicit parameters
-            with psycopg2.connect(
-                host=self.config['host'],
-                database=self.config['database'],
-                user=self.config['user'],
-                password=self.config['password'],
-                port=self.config['port']
-            ) as conn:
-                with conn.cursor() as cursor:
-                    # Process each receipt record
-                    for record in receipts:
-                        estado = record.get('estado')
-                        folio = record.get('folio')
-                        new_id = record.get('id')
-                        response_data = record.get('respuesta')
+            # Get connection from pool
+            conn = self.pool.get_connection()
+            if not conn:
+                logging.error("Could not get database connection from pool")
+                return False
+                
+            cursor = conn.cursor()
+            
+            # Process each receipt record
+            for record in receipts:
+                estado = record.get('estado')
+                folio = record.get('folio')
+                new_id = record.get('id')
+                response_data = record.get('respuesta')
                         
-                        if not all([estado, folio, new_id, response_data]):
-                            logging.warning(f"Missing required fields in receipt record: {record}")
-                            continue
+                if not all([estado, folio, new_id, response_data]):
+                    logging.warning(f"Missing required fields in receipt record: {record}")
+                    continue
 
-                        query = sql.SQL("""
-                            UPDATE recibo_venta 
-                            SET estado = %s, 
-                                respuesta = %s
-                            WHERE folio = %s
-                            RETURNING id_sql
-                        """)
-                        
-                        cursor.execute(query, (estado, response_data, folio))
-                        updated_id = cursor.fetchone()
-                        conn.commit()
-                        
-                        if updated_id:
-                            logging.info(f"Successfully updated receipt status for folio {folio}")
-                            success_count += 1
-                        else:
-                            logging.warning(f"No receipt record found for folio {folio}")
-                    
-                    return success_count == total_count  # Return True only if all updates succeeded
-                        
-        except Exception as e:
-            logging.error(f"response_tracking :: Error updating receipt statuses: {e}")
+                query = """
+                    UPDATE recibo_venta 
+                    SET estado = ?, 
+                        respuesta = ?
+                    WHERE folio = ?
+                    RETURNING id_sql
+                """
+                
+                cursor.execute(query, (estado, response_data, folio))
+                updated_id = cursor.fetchone()
+                conn.commit()
+                
+                if updated_id:
+                    logging.info(f"Successfully updated receipt status for folio {folio}")
+                    success_count += 1
+                else:
+                    logging.warning(f"No receipt record found for folio {folio}")
+            
+            return success_count == total_count  # Return True only if all updates succeeded
+                
+        except sqlite3.Error as e:
+            logging.error(f"SQLite error updating receipt statuses: {e}")
             return False
+        except Exception as e:
+            logging.error(f"Error updating receipt statuses: {e}")
+            return False
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                self.pool.release_connection(conn)
