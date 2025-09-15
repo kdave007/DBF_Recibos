@@ -1,4 +1,4 @@
-import psycopg2
+
 
 from datetime import datetime, date
 from typing import List, Dict, Optional

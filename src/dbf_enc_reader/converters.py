@@ -33,8 +33,23 @@ class DataConverter:
         if value is None:
             return None
             
-        # Handle .NET types that aren't JSON serializable
-        if hasattr(value, 'ToString'):
+        # Handle .NET DateTime objects specifically to ensure consistent format
+        if hasattr(value, 'ToString') and 'DateTime' in str(type(value)):
+            # Convert .NET DateTime to consistent DD/MM/YYYY HH:MM:SS format
+            try:
+                original_value = str(value)
+                # Use ToString with specific format to ensure consistency across systems
+                formatted_date = value.ToString("dd/MM/yyyy HH:mm:ss")
+                # print(f"[DBF DATE CONVERSION] Before: '{original_value}' -> After: '{formatted_date}'")
+                return formatted_date
+            except:
+                # Fallback to default string conversion if formatting fails
+                fallback_value = str(value)
+                # print(f"[DBF DATE CONVERSION] Failed formatting, using fallback: '{fallback_value}'")
+                return fallback_value
+        
+        # Handle other .NET types that aren't JSON serializable
+        elif hasattr(value, 'ToString'):
             value = str(value)
             
         # Apply smart trimming after conversion

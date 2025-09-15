@@ -26,18 +26,13 @@ class APIResponseTracking:
         print(f'item to insert {item}')
         
         fecha_str = item.get('fecha_emision')
-        create_index = 0 #since it does not have an assigned index by server yet, set it as 0
+        create_index = 0  # since it does not have an assigned index by server yet, set it as 0
         doc_type = "FA"
-
-        try:
-            # Remove the 'a. m.' or 'p. m.' part and parse the date
-            fecha_str = fecha_str.replace(' a. m.', '').replace(' p. m.', '')
-            # Format is day/month/year in the DBF records
-            fecha_date = datetime.strptime(fecha_str, '%d/%m/%Y %H:%M:%S').date()
-        except (ValueError, AttributeError):
-            # Fallback to current date if parsing fails
-            fecha_date = datetime.now().date()
-            print(f"Warning: Could not parse date '{fecha_str}', using current date instead")
+        
+        # Use the date utility function to handle all date formats
+        from src.utils.date_utils import parse_fecha
+        fecha_date = parse_fecha(fecha_str)
+        print(f"Parsed date: {fecha_date} (from: '{fecha_str}')")
         
         return self.resp_tracking.insert_fac(
             create_index,

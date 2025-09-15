@@ -32,8 +32,6 @@ class ReceiptTracking:
                     folio, num_ref, hash, estado, fecha_emision, fecha_procesamiento, indice
                 ) VALUES (?, ?, ?, ?, ?, datetime('now'), ?)
             """
-            print(f'RECEIPTS TO PROCESS: {receipts}')
-
             # Process each receipt
             for receipt in receipts:
                 # Get basic fields from the receipt
@@ -41,16 +39,19 @@ class ReceiptTracking:
                 folio = receipt.get('folio', '')
                 indice = receipt.get('indice')
                 
-                # Get fecha_emision (default to today)
-                fecha_emision = receipt.get('fecha_emision', date.today())
+                # Get fecha_emision (try both 'fecha_emision' and 'fecha' fields, default to today)
+                fecha_emision_raw = receipt.get('fecha_emision') or receipt.get('fecha', date.today())
+                
+                fecha_emision = fecha_emision_raw
                 if isinstance(fecha_emision, str):
                     try:
-                        # Try to parse date in format '15/07/2025 12:00:00 a. m.'
-                        fecha_emision = datetime.strptime(fecha_emision.split(' ')[0], '%d/%m/%Y').date()
+                        # Try ISO format first (most common from DBF conversion)
+                        fecha_emision = datetime.strptime(fecha_emision, '%Y-%m-%d').date()
                     except ValueError:
                         try:
-                            # Try standard ISO format
-                            fecha_emision = datetime.strptime(fecha_emision, '%Y-%m-%d').date()
+                            # Try to parse date in format '15/07/2025 12:00:00 a. m.'
+                            date_part = fecha_emision.split(' ')[0]
+                            fecha_emision = datetime.strptime(date_part, '%d/%m/%Y').date()
                         except ValueError:
                             # Default to today if parsing fails
                             fecha_emision = date.today()

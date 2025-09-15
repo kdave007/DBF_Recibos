@@ -107,34 +107,17 @@ class DBFSQLComparator:
             logging.error("DBF record missing fecha field")
             return {"matched": False, "error": "DBF record missing fecha field"}
             
-        # Parse the date from the first record
+        # Parse the date from the first record using our centralized date utility
         try:
-            # Handle Spanish format with periods in AM/PM (a. m. / p. m.)
+            from src.utils.date_utils import parse_fecha
             fecha = first_record['fecha']
-            # Try different date formats - DBF uses MM/DD/YYYY format
-            date_formats = [
-                '%d/%m/%Y %I:%M:%S %p',  # MM/DD/YYYY with AM/PM
-                '%d/%m/%Y %I:%M:%S %a. m.',  # MM/DD/YYYY with Spanish AM
-                '%d/%m/%Y %I:%M:%S %p. m.',  # MM/DD/YYYY with Spanish PM
-                '%d/%m/%Y %H:%M:%S',  # MM/DD/YYYY with 24-hour time
-                '%d/%m/%Y'  # MM/DD/YYYY date only
-            ]
-            
-            record_date = None
-            for fmt in date_formats:
-                try:
-                    # Replace Spanish AM/PM format to standard format if needed
-                    temp_fecha = fecha.replace('a. m.', 'AM').replace('p. m.', 'PM')
-                    record_date = datetime.strptime(temp_fecha, fmt)
-                    print(f"Successfully parsed date {fecha} using format {fmt}")
-                    break
-                except ValueError:
-                    continue
+            record_date = parse_fecha(fecha)
+            print(f"Successfully parsed date {fecha} as {record_date}")
                    
             if record_date is None:
                 raise ValueError(f"Could not parse date: {fecha} with any known format")
                 
-            start_date = record_date.date()
+            start_date = record_date  # parse_fecha already returns a date object
         except Exception as e:
             logging.error(f"Error parsing date: {e}")
             return {"matched": False, "error": f"Error parsing date: {e}"}

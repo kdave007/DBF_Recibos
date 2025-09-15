@@ -91,3 +91,5 @@ art_m.json
 .env.enc
 .env.key
 *.env
+
+*.sql

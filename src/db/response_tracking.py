@@ -88,6 +88,9 @@ class ResponseTracking:
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 RETURNING id
             """
+            # Debug print for query and parameters
+            
+            
             params = (
                 id,
                 folio, 
@@ -101,6 +104,9 @@ class ResponseTracking:
                 id_cola,
                 tipo_doc
             )
+
+            # print(f"[DEBUG] SQL Query: {query}")
+            # print(f"[DEBUG] Params: {params}")
             
             cursor.execute(query, params)
             result = cursor.fetchone()
