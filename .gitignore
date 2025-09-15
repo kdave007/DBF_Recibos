@@ -93,3 +93,4 @@ art_m.json
 *.env
 
 *.sql
+*.sqlite

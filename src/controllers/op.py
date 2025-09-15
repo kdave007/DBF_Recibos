@@ -42,7 +42,7 @@ class OP:
             logging.info(f"request to upload waiting line data finished")
             #wait here till the server process the documents...
             # sys.exit()
-            time.sleep(2)
+            time.sleep(6)
             logging.info(f"START ::  GET request for documents uploaded to the server...")
             update_results = self.update_pending()
 

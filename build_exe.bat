@@ -17,7 +17,6 @@ pyinstaller --noconfirm ^
   --onefile ^
   --name "DBF_Recibos" ^
   --add-data "mappings.json;." ^
-  --add-data "tests\art_m.json;tests" ^
   --add-data "Advantage.Data.Provider.dll;." ^
   --hidden-import=src ^
   --hidden-import=src.config ^

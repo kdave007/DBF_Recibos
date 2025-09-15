@@ -70,7 +70,25 @@ class PendingRecordsController:
 
             # Format the date as YYYY-MM-DD
             fecha_emision = record.get('fecha_emision')
-            formatted_record['fecha'] = fecha_emision.strftime('%Y-%m-%d') if hasattr(fecha_emision, 'strftime') else None
+            print(f"[PENDING DEBUG] Raw fecha_emision: '{fecha_emision}' (type: {type(fecha_emision)})")
+            
+            if fecha_emision:
+                if isinstance(fecha_emision, str):
+                    # Parse string date using our utility function
+                    from src.utils.date_utils import parse_fecha
+                    parsed_date = parse_fecha(fecha_emision)
+                    formatted_record['fecha'] = parsed_date.strftime('%Y-%m-%d')
+                    print(f"[PENDING DEBUG] Parsed string date: '{formatted_record['fecha']}'")
+                elif hasattr(fecha_emision, 'strftime'):
+                    # Already a date/datetime object
+                    formatted_record['fecha'] = fecha_emision.strftime('%Y-%m-%d')
+                    print(f"[PENDING DEBUG] Formatted date object: '{formatted_record['fecha']}'")
+                else:
+                    print(f"[PENDING DEBUG] Unknown date type, setting to None")
+                    formatted_record['fecha'] = None
+            else:
+                print(f"[PENDING DEBUG] No fecha_emision found, setting to None")
+                formatted_record['fecha'] = None
             
             # Get serie from velneo mappings
             formatted_record['serie'] = self.velneo_mappings.get_from_general_serie(store)
