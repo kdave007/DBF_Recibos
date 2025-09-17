@@ -9,26 +9,11 @@ if not exist "Advantage.Data.Provider.dll" (
 )
 
 rem Clean previous build artifacts
-rmdir /s /q build dist
-del /q *.spec
+if exist build rmdir /s /q build
+if exist dist rmdir /s /q dist
 
-rem Run PyInstaller with all required options
-pyinstaller --noconfirm ^
-  --onefile ^
-  --name "DBF_Recibos" ^
-  --add-data "mappings.json;." ^
-  --add-data "Advantage.Data.Provider.dll;." ^
-  --hidden-import=src ^
-  --hidden-import=src.config ^
-  --hidden-import=src.controllers ^
-  --hidden-import=src.db ^
-  --hidden-import=src.utils ^
-  --hidden-import=src.dbf_enc_reader ^
-  --hidden-import=clr ^
-  --hidden-import=pythonnet ^
-  --hidden-import=dotenv ^
-  --paths="." ^
-  tests\test_find_matches_simple.py
+rem Use the existing spec file for better control
+pyinstaller --noconfirm DBF_Recibos.spec
 
 echo.
 if %ERRORLEVEL% EQU 0 (
