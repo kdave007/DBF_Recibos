@@ -322,7 +322,7 @@ class MatchesProcess:
         # Find all records with matching folios
         for i, record in enumerate(records):
             folio = record.get('folio')
-            if folio is not None:
+            if folio != None:
                 # Convert to string for consistent comparison
                 str_folio = str(folio)
                 if str_folio in str_folio_set:

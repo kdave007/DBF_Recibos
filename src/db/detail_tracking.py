@@ -75,7 +75,7 @@ class DetailTracking:
                 cursor.execute("SELECT id FROM detalle_estado WHERE id = ?", (id,))
                 result = cursor.fetchone()
                 
-                return result is not None
+                return result != None
                     
         except sqlite3.Error as e:
             logging.error(f"SQLite error al insertar/actualizar detalle: {e}")

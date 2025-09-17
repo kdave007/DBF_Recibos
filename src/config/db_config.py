@@ -175,7 +175,7 @@ class SQLiteConnection:
                 cursor = connection.cursor()
                 
                 # Execute the query
-                if params is not None:
+                if params != None:
                     # Convert dict params to tuple if needed for SQLite
                     if isinstance(params, dict):
                         # Replace named parameters with ? placeholders

@@ -181,7 +181,7 @@ class SendRequest:
             """ 
             response_value = response.text
 
-            if response.status_code in [200, 201, 202, 204] and response_value is not 0:
+            if response.status_code in [200, 201, 202, 204] and response_value != 0:
                 
                 # formatted_json = json.dumps(response_json, indent=4, sort_keys=False)
                 print(f"Response waiting line ID for folio {folio}: {response_value}")
@@ -359,7 +359,7 @@ class SendRequest:
                         "tienda": record.get('tienda'),
                         "ref_tipo": record.get('ref_tipo'),
                         "hora": record.get('hora'),
-                        "num_doc": f'{record.get('plaza')}-{record.get('tienda')}-{record.get('ref_tipo')}-{record.get('ref_recibo')}',
+                        "num_doc": f"{record.get('plaza')}-{record.get('tienda')}-{record.get('ref_tipo')}-{record.get('ref_recibo')}",
                         "fpg": record.get('fpg')
                     }
             print(record)        

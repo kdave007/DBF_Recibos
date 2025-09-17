@@ -275,7 +275,7 @@ class VelneoMappings:
             cursor = conn.cursor()
             
             # Convert reference to string to match the character varying column
-            str_reference = str(reference) if reference is not None else None
+            str_reference = str(reference) if reference != None else None
             
             query = """
             SELECT velneo FROM vendedores 
