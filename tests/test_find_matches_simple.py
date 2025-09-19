@@ -111,15 +111,23 @@ def main():
             limit_rows=10000  # Limit to 500 sales for testing
         )
 
-        # tipo_doc = "FA"
-        tipo_doc = "DV"
+        tipo_doc = "FA"
+        
 
         result = process.start(config, start_date, end_date, tipo_doc)
         if result:
-            print("Test completed successfully!")
+            print(" FACTURAS Test completed successfully!")
         else:
             print("Test completed with warnings")
-        return result
+        
+        tipo_doc = "DV"
+        print("DEVOLUCIONES process starting...")
+        result = process.start(config, start_date, end_date, tipo_doc)
+        if result:
+            print("DEVOLUCIONES Test completed successfully!")
+        else:
+            print("Test completed with warnings")
+
     except Exception as e:
         # Log the error with simple message
         logging.error(f"Test failed: {str(e)}")
