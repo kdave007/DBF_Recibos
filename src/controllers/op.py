@@ -165,7 +165,7 @@ class OP:
             #     return {'success' : total_successfull_op, 'failed' : total_failed_op}
 
             folio = record.get('num_doc')
-            results = self.get_pending.send(record)
+            results = self.get_pending.send(record, tipo_doc)
 
             print(f'GET REQUEST  {folio}')
 

@@ -41,14 +41,17 @@ class GetPendingReq:
             justified_folio = str(folio).zfill(6)
             get_endpoint= self.env.get("API_GET_URL")# THIS MUST BE A NEW URL
             url = f"{get_endpoint}?api_key={self.api}&params[NUM_DOC]={justified_folio}&params[SER]={serie}&params[FCH]={fecha}"
+            print(f"Making GET request to: {url}")
+            logging.info(f"GET REQUEST for FOLIO {folio} (justified as {justified_folio})")
         
         elif tipo_doc == "DV": #TODO : CHECK IF WE NEED TO JUSTIFY THE FOLIO FOR DV DOCUMENTS
             get_endpoint= self.env.get("API_GET_URL_DV")# THIS MUST BE A NEW URL
             url = f"{get_endpoint}?api_key={self.api}&params[NUM_DOC]={folio}&params[SER]={serie}&params[FCH]={fecha}"
+            print(f"Making GET request to: {url}")
+            logging.info(f"GET REQUEST for FOLIO {folio}")
 
      
-        print(f"Making GET request to: {url}")
-        logging.info(f"GET REQUEST for FOLIO {folio} (justified as {justified_folio})")
+        
         logging.info(f"waiting ID : {waiting_id} - serie {serie} - fecha {fecha}")
 
         if self.DEBUG_MODE:

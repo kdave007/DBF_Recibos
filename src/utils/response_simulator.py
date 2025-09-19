@@ -31,7 +31,7 @@ class ResponseSimulator:
         response = {
             "CA": {
                 "id": ca_id,
-                "folio": int(folio) if folio.isdigit() else folio
+                "folio": folio
             },
             "MENSAJE": "",
             "ST": "OK",

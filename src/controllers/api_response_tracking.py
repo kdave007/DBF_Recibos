@@ -169,7 +169,7 @@ class APIResponseTracking:
         new_id = record.get('id')
        
         
-        print(f"Updating record {id} to status: {estado}, action: {action}")
+        print(f"Updating record {record.get('num_doc')} to status: {estado}, action: {action}")
         
         return self.resp_tracking.update_head_status(folio, new_id, estado, action, tipo_doc)
 
