@@ -27,7 +27,6 @@ a = Analysis(
     runtime_hooks=['pyi_rth_pythonnet.py'],
     excludes=[],
     noarchive=False,
-    optimize=0,
 )
 pyz = PYZ(a.pure)
 

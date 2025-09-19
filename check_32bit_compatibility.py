@@ -28,21 +28,33 @@ def check_pythonnet():
     """Check pythonnet installation and compatibility"""
     try:
         import pythonnet
-        print(f"✓ pythonnet version: {pythonnet.__version__}")
+        
+        # Handle older pythonnet versions that don't have __version__
+        try:
+            version = pythonnet.__version__
+            print(f"✓ pythonnet version: {version}")
+        except AttributeError:
+            print("✓ pythonnet installed (older version without __version__ attribute)")
         
         # Try to import clr
         import clr
         print("✓ CLR module imported successfully")
         
         # Try basic .NET operations
-        clr.AddReference("System")
-        from System import String
-        test_string = String("Test")
-        print("✓ Basic .NET operations working")
+        try:
+            clr.AddReference("System")
+            from System import String
+            test_string = String("Test")
+            print("✓ Basic .NET operations working")
+        except Exception as e:
+            print(f"⚠ Basic .NET operations failed: {e}")
+            print("  This may indicate pythonnet compatibility issues")
+            return False
         
         return True
     except ImportError as e:
         print(f"✗ pythonnet not installed or incompatible: {e}")
+        print("  Try: pip install \"pythonnet==3.0.3\" for Python 3.8.10")
         return False
     except Exception as e:
         print(f"⚠ pythonnet installed but has issues: {e}")
@@ -162,10 +174,11 @@ def main():
     else:
         print("⚠ SOME CHECKS FAILED. Please address the issues above before compiling.")
         print("\nRecommended fixes:")
-        print("1. Install missing dependencies: pip install -r requirements.txt")
-        print("2. Ensure you have 32-bit Python if targeting 32-bit systems")
-        print("3. Verify Advantage.Data.Provider.dll is the correct architecture")
-        print("4. Install PyInstaller: pip install pyinstaller")
+        print("1. Install missing dependencies: pip install python-dotenv")
+        print("2. For Python 3.8.10 + pythonnet: pip install \"pythonnet==3.0.3\"")
+        print("3. Ensure you have 32-bit Python if targeting 32-bit systems")
+        print("4. Verify Advantage.Data.Provider.dll is the correct 32-bit architecture")
+        print("5. Install PyInstaller: pip install pyinstaller")
     
     print("=" * 60)
 
