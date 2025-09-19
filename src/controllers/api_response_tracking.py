@@ -17,7 +17,7 @@ class APIResponseTracking:
         self.resp_detail_tracking = DetailTracking(self.db_config)
         self.resp_receipt_tracking = ReceiptTracking(self.db_config)
 
-    def _create_op(self, item):
+    def _create_op(self, item, tipo_doc):
         action = item.get('accion')
         estado = item.get('estado')
         waiting_id = item.get('id')
@@ -27,7 +27,7 @@ class APIResponseTracking:
         
         fecha_str = item.get('fecha_emision')
         create_index = 0  # since it does not have an assigned index by server yet, set it as 0
-        doc_type = "FA"
+        doc_type = tipo_doc
         
         # Use the date utility function to handle all date formats
         from src.utils.date_utils import parse_fecha
@@ -153,7 +153,7 @@ class APIResponseTracking:
                     item.get('id')
                 )
                 
-    def _head_completed(self, record):
+    def _head_completed(self, record, tipo_doc):
         """Update record status to indicate that all details have been processed
         
         Args:
@@ -167,7 +167,7 @@ class APIResponseTracking:
         action = record.get('accion')
         folio = record.get('folio')
         new_id = record.get('id')
-        tipo_doc = 'FA'
+       
         
         print(f"Updating record {id} to status: {estado}, action: {action}")
         

@@ -26,7 +26,7 @@ class MatchesProcess:
         self.comparator = DBFSQLComparator(self.db_config)
         self.retry_tracker = RetriesTracking(self.db_config)
 
-    def compare_data(self, config, start_date, end_date):
+    def compare_data(self, config, start_date, end_date, tipo_doc):
         #TO DO : this config may be pass as a parameter and not defined here, but just for testing
        
         # Test date range using a date we know exists in the DBF
@@ -39,21 +39,23 @@ class MatchesProcess:
         
         
         #fetch dbf data
-        dbf_results = self.get_dbf_data(config, start_date, end_date)
+        dbf_results = self.get_dbf_data(config, start_date, end_date, tipo_doc)
 
+        
         # print(dbf_results)
+        # sys.exit(0)
 
         # Process DBF data through DataMap for API formatting
         print("\n=== Starting db_map_implementations ===")
         db_map_start_time = time.time()
-        dbf_results = self.db_map_implementations(dbf_results)
+        dbf_results = self.db_map_implementations(dbf_results, tipo_doc)
       
         db_map_end_time = time.time()
         db_map_time = db_map_end_time - db_map_start_time
         print(f"\n=== db_map_implementations completed in {db_map_time:.2f} seconds ===")
         
         # Obtener registros SQL
-        sql_records = self.get_sql_data(start_date, end_date, 'FA')
+        sql_records = self.get_sql_data(start_date, end_date, tipo_doc)
        
         if not sql_records:
             print(f"No hay registros en SQL entre {start_date} y {end_date}. agregando a lista de nuevos registros")
@@ -83,18 +85,20 @@ class MatchesProcess:
 
         
         
-    def get_dbf_data(self, config, start_date, end_date):
+    def get_dbf_data(self, config, start_date, end_date, tipo_doc):
         """Obtiene datos DBF y agrega hashes MD5"""
         import hashlib
         import json
         
+        json_maps = "mappings.json" if tipo_doc == 'FA' else "mappings_dv.json" if tipo_doc == "DV" else "mappings.json"
+
         # Initialize mapping manager
-        mapping_file = Path(project_root) / "mappings.json"
+        mapping_file = Path(project_root) / json_maps
         mapping_manager = MappingManager(str(mapping_file))
         controller = VentasController(mapping_manager, config)
         
         # Obtener datos originaales
-        data = controller.get_sales_in_range(start_date, end_date)
+        data = controller.get_sales_in_range(start_date, end_date, tipo_doc)
         
         # Agregar hash MD5 a cada registro
         for i, record in enumerate(data):
@@ -154,7 +158,7 @@ class MatchesProcess:
         print("\n=================================================\n")
 
 
-    def db_map_implementations(self, dbf_results):
+    def db_map_implementations(self, dbf_results, tipo_doc):
         from src.utils.post_data_map import DataMap
         
         # Initialize timing variables
@@ -179,20 +183,36 @@ class MatchesProcess:
         if dbf_results and 'data' in dbf_results and dbf_results['data']:
             for i, record in enumerate(dbf_results['data']):
                 # Check if this is a valid invoice record with the expected structure
-                if 'Cabecera' in record and record['Cabecera'] == 'FA':
+                if 'tipo_doc' in record and record['tipo_doc'] == tipo_doc:
+
+                    if tipo_doc == "FA":
                     # Process the header (factura)
-                    header_data = {
-                        'Cabecera': record['Cabecera'],
-                        'Folio': record['Folio'],
-                        'cliente': record.get('cliente'),
-                        'empleado': record.get('empleado'),
-                        'fecha': record.get('fecha'),
-                        'total_bruto': record.get('total_bruto'),
-                        'hor': record.get('hor'),
-                        'fpg': record.get('fpg'),
-                        'fpg_v': record.get('fpg_v'),
-                        'md5_hash': record.get('md5_hash')
-                    }
+                        header_data = {
+                            'tipo_doc': record['tipo_doc'],
+                            'Folio': record['Folio'],
+                            'cliente': record.get('cliente'),
+                            'empleado': record.get('empleado'),
+                            'fecha': record.get('fecha'),
+                            'total_bruto': record.get('total_bruto'),
+                            'hor': record.get('hor'),
+                            'fpg': record.get('fpg'),
+                            'fpg_v': record.get('fpg_v'),
+                            'md5_hash': record.get('md5_hash')
+                        }
+                    elif tipo_doc == "DV":
+                        header_data = {
+                            'tipo_doc': record['tipo_doc'],
+                            'Folio': record['Folio'],
+                            'cliente': record.get('cliente'),
+                            'empleado': record.get('empleado'),
+                            'fecha': record.get('fecha'),
+                            'total_bruto': record.get('total_bruto'),
+                            'hor': record.get('hor'),
+                            'fpg': record.get('fpg'),
+                            'fpg_v': record.get('fpg_v'),
+                            'og_folio': record.get('og_folio'),
+                            'md5_hash': record.get('md5_hash')
+                        }
                     
                     store = os.environ.get("CLAVE_SUCURSAL", "ROTON")  # Get from environment variable with fallback
                     plaza = os.environ.get("CLAVE_PLAZA", "XALAP")  # Get from environment variable with fallback

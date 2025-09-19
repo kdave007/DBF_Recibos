@@ -8,11 +8,11 @@ import sys
 import logging
 
 class WorkFlow:
-    def start(self, config, start_date, end_date):
+    def start(self, config, start_date, end_date, tipo_doc):
         
         self.matches_process = MatchesProcess()
-        result = self.matches_process.compare_data(config, start_date, end_date)
-        #print(f' MAIN W Result {result}')
+        result = self.matches_process.compare_data(config, start_date, end_date, tipo_doc)
+        print(f' MAIN W Result {result}')
         # print("STOP")
         # sys.exit()
         
@@ -31,7 +31,7 @@ class WorkFlow:
                 logging.info('Finish process...')
 
             op = OP()
-            op.execute(result['api_operations'])
+            op.execute(result['api_operations'], tipo_doc)
         
 
 

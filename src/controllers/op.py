@@ -1,4 +1,5 @@
 
+from cryptography.hazmat.primitives.ciphers import base
 from .send_request import SendRequest
 from .send_details import SendDetails
 from .api_response_tracking import APIResponseTracking
@@ -21,7 +22,7 @@ from src.controllers.verify_document import VerifyDocument
 load_dotenv()
 
 class OP:
-    def execute(self, operations):
+    def execute(self, operations, tipo_doc):
         self.class_name = "Op"
         self.send_req = SendRequest()
         self.send_det = SendDetails()
@@ -38,13 +39,13 @@ class OP:
         self.bypass_ca = False
 
         if "create" in operations:
-            create_results = self._create(operations['create'])
+            create_results = self._create(operations['create'], tipo_doc)
             logging.info(f"request to upload waiting line data finished")
             #wait here till the server process the documents...
             # sys.exit()
             time.sleep(6)
             logging.info(f"START ::  GET request for documents uploaded to the server...")
-            update_results = self.update_pending()
+            update_results = self.update_pending(tipo_doc)
 
             logging.info(f"RESUME :: ")
             logging.info(f"//***// Total POST successfull op {create_results['success']}, total failed op {create_results['failed']} //***//")
@@ -60,7 +61,7 @@ class OP:
             # self._delete(operations['delete'])     
 
 
-    def _create(self, records):
+    def _create(self, records, tipo_doc):
         # Read API configuration from .env file
         base_url = self.env.get('API_BASE_URL')
         api_key = self.env.get('API_KEY')
@@ -81,8 +82,11 @@ class OP:
             logging.info(f"operation skipping folio : {record.get('folio')}")
             #continue
             
+            if tipo_doc == "DV":
+                base_url = self.env.get('API_BASE_URL_DV')
+
             # Make the first API call
-            waiting_line_result = self.send_req.waiting_line(record, base_url, api_key)
+            waiting_line_result = self.send_req.waiting_line(record, tipo_doc, base_url, api_key)
 
             # print(f"waiting line result : {waiting_line_result}")
 
@@ -93,7 +97,7 @@ class OP:
 
                 if self.sql_enabled :
                
-                    fac_result = self.api_track._create_op(waiting_line_result['success'][0])
+                    fac_result = self.api_track._create_op(waiting_line_result['success'][0], tipo_doc)
                     logging.info(f"insertion sql headers success: {fac_result}")
                     
                     # Process partidas (details)
@@ -143,14 +147,14 @@ class OP:
         return {'success' : total_successfull_op, 'failed' : total_failed_op}
 
      
-    def update_pending(self):
+    def update_pending(self, tipo_doc):
         """TODO: 
             read values and just update status and ids for each partition, create an update status and id method for ca, pa, and co
         """
         total_successfull_op = 0
         total_failed_op = 0
         
-        pendings = self.pending_records.get_pending_records('FA')
+        pendings = self.pending_records.get_pending_records(tipo_doc)
 
         print(f'pendings {pendings}')
 
@@ -171,7 +175,7 @@ class OP:
 
                 if self.sql_enabled :
                 
-                    fac_result = self.api_track._head_completed(results['success'][0])
+                    fac_result = self.api_track._head_completed(results['success'][0], tipo_doc)
                     logging.info(f"insertion sql headers success: {fac_result}")
                    
                     

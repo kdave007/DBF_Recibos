@@ -40,7 +40,7 @@ class SendRequest:
 
     
 
-    def waiting_line(self, record, base_url, api_key):
+    def waiting_line(self, record, tipo_doc, base_url, api_key):
         """
         Process a single record and send it to the API
         
@@ -70,7 +70,7 @@ class SendRequest:
         # Add decorative logging for sending folio
         border = "=" * 80
 
-        if len(dbf_record.get('recibos', [])) == 0 or len(dbf_record.get('detalles', [])) == 0 :
+        if len(dbf_record.get('detalles', [])) == 0 or (len(dbf_record.get('recibos', [])) == 0 and tipo_doc == "FA") :
             logging.warning(f"Declined send request for folio {folio} found with {len(dbf_record.get('detalles', []))} detalles and {len(dbf_record.get('recibos', []))} recibos")
             results['failed'].append({
                         'folio': folio,

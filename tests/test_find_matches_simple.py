@@ -96,30 +96,11 @@ def main():
     print(f"Start date: {start_date} - {type(start_date)}")
     print(f"End date: {end_date} - {type(end_date)}")
     
-    # Exit after printing dates
-    # sys.exit(0)
-    
-    #Original code (won't be executed due to sys.exit above)
-    # start_date = date(2025, 7, 1)  # year month day
-    # end_date = date(2025, 7, 2)  # year month day
 
     logging.info(f'start date : {start_date} to end_date {end_date}')
     
     process = WorkFlow()
 
-    # url_source_A = r"C:\Users\gtdri\Documents\projects\care\DBF_Recibos\pospcp"
-    # url_dll_A = r"C:\Users\gtdri\Documents\projects\care\DBF_Bridge\Advantage.Data.Provider.dll"
-
-    # url_dll_B=r"C:\Users\campo\Documents\projects\DBF_Bridge\Advantage.Data.Provider.dll"
-    # url_source_B=r"C:\Users\campo\Documents\projects\DBF_Recibos\pospcp"
-
-    # config = DBFConfig(
-    #     dll_path=url_dll_B,
-    #         encryption_password="X3WGTXG5QJZ6K9ZC4VO2",
-    #         source_directory=url_source_B,
-    #         limit_rows=500  # Limit to 3 sales for testing
-    # )
-    
 
     # Use environment variables from .env file instead of hardcoded values
     try:
@@ -129,7 +110,11 @@ def main():
             # dll_path, encryption_password, and source_directory will be loaded from .env
             limit_rows=10000  # Limit to 500 sales for testing
         )
-        result = process.start(config, start_date, end_date)
+
+        # tipo_doc = "FA"
+        tipo_doc = "DV"
+
+        result = process.start(config, start_date, end_date, tipo_doc)
         if result:
             print("Test completed successfully!")
         else:

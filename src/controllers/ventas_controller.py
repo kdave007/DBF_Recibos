@@ -41,7 +41,7 @@ class VentasController:
         DBFConnection.set_dll_path(self.config.dll_path)
         self.reader = DBFReader(self.config.source_directory, self.config.encryption_password)
     
-    def get_sales_in_range(self, start_date: datetime, end_date: datetime) -> List[Dict[str, Any]]:
+    def get_sales_in_range(self, start_date: datetime, end_date: datetime, tipo_doc) -> List[Dict[str, Any]]:
         """Get sales data within the specified date range, including details.
         
         Args:
@@ -56,7 +56,7 @@ class VentasController:
         # First get headers for the date range
         headers_start = time.time()
 
-        headers = self._get_headers_in_range(start_date, end_date)
+        headers = self._get_headers_in_range(start_date, end_date, tipo_doc)
         headers_time = time.time() - headers_start
 
         print(f"\nTime to get headers: {headers_time:.2f} seconds")
@@ -240,7 +240,7 @@ class VentasController:
         
         return receipts_by_folio
         
-    def _get_headers_in_range(self, start_date: date, end_date: date) -> List[Dict[str, Any]]:
+    def _get_headers_in_range(self, start_date: date, end_date: date, tipo_doc) -> List[Dict[str, Any]]:
         """Get sales headers within the specified date range."""
         field_mappings = self.mapping_manager.get_field_mappings(self.venta_dbf)
         str_start = start_date.strftime("%m-%d-%Y")
@@ -269,7 +269,7 @@ class VentasController:
         transformed_data = []
         for record in raw_data:
           
-            if record.get('TIPO_DOC') == 'FA':#only add FA records
+            if record.get('TIPO_DOC') == tipo_doc:
                 transformed = self.transform_record(record, field_mappings)
                 if transformed:
                     transformed_data.append(transformed)
@@ -291,9 +291,19 @@ class VentasController:
             dbf_field = mapping['dbf']
             if dbf_field in record:
                 value = record[dbf_field]
+
+                # Sanitize string values to handle special characters
+                if isinstance(value, str):
+                    value = self.sanitize_string(value)
+
                 if mapping['type'] == 'number':
                     try:
-                        value = float(value) if '.' in str(value) else int(value)
+                        # Check if this is a reference number that needs to preserve leading zeros
+                        if dbf_field.startswith('NO_REFEREN') or dbf_field.startswith('NUMERO_A') :
+                            # Keep it as string to preserve leading zeros
+                            pass
+                        else:    
+                         value = float(value) if '.' in str(value) else int(value)
                     except (ValueError, TypeError):
                         value = 0
                 
@@ -305,3 +315,20 @@ class VentasController:
             setattr(VentasController, '_printed_transform', True)
                 
         return transformed
+
+    def sanitize_string(self, text):
+        """
+        Sanitize a string value to prevent issues with special characters.
+        
+        Args:
+            text: The string to sanitize
+            
+        Returns:
+            Sanitized string
+        """
+        if not isinstance(text, str):
+            return text
+            
+        # Replace problematic characters or escape them
+        # This handles quotes and other special characters
+        return text.replace('"', '\"').replace("'", "\'")

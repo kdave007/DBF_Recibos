@@ -110,7 +110,12 @@
                 "dbf": "CAMPO1",
                 "velneo_table": "ref_recibo" ,
                 "type": "string"
-        }
+            },
+            "NUMERO_A":{
+                "dbf": "NUMERO_A",
+                "velneo_table": "og_folio" ,
+                "type": "string"
+            }
         }
     },
     "PARTVTA.DBF": {
@@ -174,6 +179,11 @@
                 "dbf": "NDESCTO2",
                 "velneo_table": "n_descto_2" ,
                 "type": "number"
+            },
+            "CDESC_ADI":{
+                "dbf": "CDESC_ADI",
+                "velneo_table": "desc_adi" ,
+                "type": "string"
             }
         }
     },

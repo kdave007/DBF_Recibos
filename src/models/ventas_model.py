@@ -37,7 +37,7 @@ class VentasModel():
         
         prepared_record = {
             'id': int(record['Folio']),  # Using folio as ID
-            'cabecera': record['Cabecera'],
+            'tipo_doc': record['tipo_doc'],
             'folio': int(record['Folio']),
             'cliente': record['cliente'],
             'empleado': int(record['empleado']),

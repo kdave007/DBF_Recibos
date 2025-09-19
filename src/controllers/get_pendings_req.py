@@ -10,11 +10,10 @@ class GetPendingReq:
 
     def __init__(self):
         self.env = EncEnv()
-        self.get_endpoint= self.env.get("API_GET_URL")# THIS MUST BE A NEW URL
         self.api = self.env.get("API_KEY")
         self.DEBUG_MODE = self.env.get('DEBUG_MODE', 'True').lower() == 'true'
 
-    def send(self, record):
+    def send(self, record, tipo_doc):
         
         results = {
             'success': [],  # Will store folio -> result for successful operations
@@ -36,14 +35,18 @@ class GetPendingReq:
         folio = record.get('num_doc')
         serie = record.get('serie')
         fecha = record.get('fecha')
-        # Justify folio to 6 digits with leading zeros
-        justified_folio = str(folio).zfill(6)
-        
-        # Construct URL with query parameters
 
-        url = f"{self.get_endpoint}?api_key={self.api}&params[NUM_DOC]={justified_folio}&params[SER]={serie}&params[FCH]={fecha}"
-        # url = f"https://c8.velneo.com:17262/api/vLatamERP_db_dat/v2/_process/PRO_VTA_FAC_JSON?api_key={self.api}&params[NUM_DOC]={folio}&params[SER]={serie}&params[FCH]={fecha}-05-16"
-        # Log the request
+        if tipo_doc == "FA":
+            # Justify folio to 6 digits with leading zeros
+            justified_folio = str(folio).zfill(6)
+            get_endpoint= self.env.get("API_GET_URL")# THIS MUST BE A NEW URL
+            url = f"{get_endpoint}?api_key={self.api}&params[NUM_DOC]={justified_folio}&params[SER]={serie}&params[FCH]={fecha}"
+        
+        elif tipo_doc == "DV": #TODO : CHECK IF WE NEED TO JUSTIFY THE FOLIO FOR DV DOCUMENTS
+            get_endpoint= self.env.get("API_GET_URL_DV")# THIS MUST BE A NEW URL
+            url = f"{get_endpoint}?api_key={self.api}&params[NUM_DOC]={folio}&params[SER]={serie}&params[FCH]={fecha}"
+
+     
         print(f"Making GET request to: {url}")
         logging.info(f"GET REQUEST for FOLIO {folio} (justified as {justified_folio})")
         logging.info(f"waiting ID : {waiting_id} - serie {serie} - fecha {fecha}")
