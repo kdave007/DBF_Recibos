@@ -56,14 +56,23 @@ class PendingRecordsController:
         
         
         for record in records:
+            # Critical validation: Skip records with empty id_cola
+            id_cola = record.get('id_cola')
+            if not id_cola or not str(id_cola).strip():
+                folio = record.get('folio', 'UNKNOWN')
+                logging.error(f"CRITICAL: Record with folio {folio} has empty id_cola. Skipping record to prevent data corruption.")
+                continue
+            
             # Get the store from the folio (assuming folio format contains store info)
             formatted_record = {}
             formatted_record['num_doc'] = record.get('folio')
-            formatted_record['id'] = int(record.get('id_cola'))
-
+            formatted_record['id'] = int(id_cola)
             #mainly used for debug simulated response mode
-            formatted_record['total_partidas'] = int(record.get('total_partidas', 0))
-            formatted_record['total_recibos'] = int(record.get('total_recibos', 0))
+            total_partidas = record.get('total_partidas', 0)
+            formatted_record['total_partidas'] = int(total_partidas) if total_partidas and str(total_partidas).strip() else 0
+            
+            total_recibos = record.get('total_recibos', 0)
+            formatted_record['total_recibos'] = int(total_recibos) if total_recibos and str(total_recibos).strip() else 0
        
             # Extract store from folio or use a default
             store = self.env.get("CLAVE_SUCURSAL")

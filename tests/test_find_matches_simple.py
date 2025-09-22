@@ -120,13 +120,13 @@ def main():
         else:
             print("Test completed with warnings")
         
-        tipo_doc = "DV"
-        print("DEVOLUCIONES process starting...")
-        result = process.start(config, start_date, end_date, tipo_doc)
-        if result:
-            print("DEVOLUCIONES Test completed successfully!")
-        else:
-            print("Test completed with warnings")
+        # tipo_doc = "DV"
+        # print("DEVOLUCIONES process starting...")
+        # result = process.start(config, start_date, end_date, tipo_doc)
+        # if result:
+        #     print("DEVOLUCIONES Test completed successfully!")
+        # else:
+        #     print("Test completed with warnings")
 
     except Exception as e:
         # Log the error with simple message

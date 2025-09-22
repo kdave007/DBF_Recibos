@@ -1,6 +1,8 @@
 import requests
 from src.utils.get_enc import EncEnv
 from src.utils.response_simulator import ResponseSimulator
+from src.config.db_config import SQLiteConnection
+from src.db.api_request_tracking import APIRequestTracking
 import logging
 import os
 import sys
@@ -12,6 +14,9 @@ class GetPendingReq:
         self.env = EncEnv()
         self.api = self.env.get("API_KEY")
         self.DEBUG_MODE = self.env.get('DEBUG_MODE', 'True').lower() == 'true'
+        # Initialize API request tracking
+        self.db_config = SQLiteConnection.get_db_config()
+        self.api_request_tracking = APIRequestTracking(self.db_config)
 
     def send(self, record, tipo_doc):
         
@@ -121,6 +126,13 @@ class GetPendingReq:
                 response_json = response.json()
                 formatted_json = json.dumps(response_json, indent=4, sort_keys=False)
                 print(f"Response JSON for folio {folio}:\n{formatted_json}")
+                
+                # Log the GET response - link it to the original POST by folio and waiting ID
+                waiting_id = record.get('id')  # This is the POST response ID
+                if waiting_id:
+                    self.api_request_tracking.update_get_response_by_folio(
+                        str(folio), str(waiting_id), formatted_json
+                    )
                 
                 estados = {
                     "CA":"completado",

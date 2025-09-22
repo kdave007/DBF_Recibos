@@ -5,6 +5,7 @@ from turtle import st
 from pathlib import Path
 from src.config.db_config import SQLiteConnection
 from src.db.response_tracking import ResponseTracking
+from src.db.api_request_tracking import APIRequestTracking
 from src.utils.response_simulator import ResponseSimulator
 import requests
 import json
@@ -37,6 +38,8 @@ class SendRequest:
         self.db_config = SQLiteConnection.get_db_config()
         # Initialize ResponseTracking with the configuration dictionary
         self.response_tracking = ResponseTracking(self.db_config)
+        # Initialize API request tracking
+        self.api_request_tracking = APIRequestTracking(self.db_config)
 
     
 
@@ -138,6 +141,9 @@ class SendRequest:
             print(f"POST Request URL: {base_url}?api_key={api_key}")
             print(f"POST Request Data:\n{post_data}")
             
+            # Log the API request and get record ID
+            api_log_id = self.api_request_tracking.log_request(folio, single_payload)
+            
             # Use simulated response if DEBUG_MODE is enabled
             if DEBUG_MODE:
                 print(f"DEBUG MODE: Using simulated response for folio {folio}")
@@ -181,10 +187,21 @@ class SendRequest:
             """ 
             response_value = response.text
 
-            if response.status_code in [200, 201, 202, 204] and response_value != 0:
+            # Validate response: good status code and non-empty, non-zero ID
+            is_valid_response = (
+                response.status_code in [200, 201, 202, 204] and 
+                response_value and 
+                response_value.strip() and 
+                response_value.strip() != "0"
+            )
+            
+            # Log the POST response
+            self.api_request_tracking.update_post_response(api_log_id, response_value)
+            
+            if is_valid_response:
                 
                 # formatted_json = json.dumps(response_json, indent=4, sort_keys=False)
-                print(f"Response waiting line ID for folio {folio}: {response_value}")
+                logging.info(f"Response waiting line ID for folio {folio}: {response_value}")
 
                 success_entry = {
                         'folio': folio,
