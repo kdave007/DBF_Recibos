@@ -1,11 +1,13 @@
 
 
 import logging
+import json
 
 class VerifyDocument:
 
    def isReady(self, record):
-      logging.info(f'Validating record: {record}')
+      logging.info(f'Validating record: {record.get('num_doc')}')
+      # print(json.dumps(record, indent=2, default=str))
       
       # Check header fields
       if not self.check_header(record):
@@ -40,8 +42,8 @@ class VerifyDocument:
       
       # Check num_doc field
       num_doc = record.get('num_doc')
-      if num_doc is None or str(num_doc).strip() == "":
-         logging.error(f"verify document :: 'num_doc' field is missing or empty in record")
+      if num_doc is None or str(num_doc).strip() == "" or str(num_doc) == "0":
+         logging.error(f"verify document :: 'num_doc' {num_doc} field is missing, empty or zero in record")
          return False
       
       # Check clt field - must exist and not be 0
@@ -170,7 +172,7 @@ class VerifyDocument:
         
         # Check por_dto field (can be 0)
         por_dto = detail.get('por_dto')
-        if por_dto:
+        if por_dto is None:
             logging.error(f"verify document :: 'por_dto' field is missing in detail")
             return False
         
@@ -239,7 +241,7 @@ class VerifyDocument:
          
          # Check caja_bco field
          caja_bco = receipt.get('caja_bco')
-         if caja_bco is None:
+         if caja_bco is None or caja_bco==0:
             logging.error(f"verify document :: 'caja_bco' field is missing or zero in receipt")
             return False
          
@@ -263,8 +265,8 @@ class VerifyDocument:
          
          # Check num_doc field
          num_doc = receipt.get('num_doc')
-         if num_doc is None or str(num_doc).strip() == "":
-            logging.error(f"verify document :: 'num_doc' field is missing or empty in receipt")
+         if num_doc is None or str(num_doc).strip() == "" or str(num_doc) == "0":
+            logging.error(f"verify document :: 'num_doc' field is missing, empty or zero in receipt")
             return False
          
          # Check fpg field

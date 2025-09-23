@@ -53,30 +53,31 @@ class ResponseSimulator:
             response["PA"].append(pa_entry)
             # response["PA"].append(pa_entry)#
         
-        # Generate entries for CO arrays based on total receipts count
-        total_receipts = record.get('total_recibos', 0)
-        for i in range(1, total_receipts + 1):
-            # Add CTA_COR_T entry
-            cta_cor_entry = {
-                "_indice": i,
-                "id": random.randint(1000, 9999)
-            }
-            response["CO"]["CTA_COR_T"].append(cta_cor_entry)
-            
-            # Add DTL_COB_APL_T entry
+        # Generate entries for CO arrays - only DTL_COB_APL_T can have multiple records
+        
+        # Generate CTA_COR_T entries (always 1 record)
+        cta_cor_entry = {
+            "_indice": 1,
+            "id": random.randint(1000, 9999)
+        }
+        response["CO"]["CTA_COR_T"].append(cta_cor_entry)
+        
+        # Generate DTL_COB_APL_T entries (1-3 records)
+        dtl_cob_apl_count = random.randint(1, 3)
+        for i in range(1, dtl_cob_apl_count + 1):
             dtl_cob_apl_entry = {
                 "ID_DTL_COB_APL": i,
                 "_indice": i
             }
             response["CO"]["DTL_COB_APL_T"].append(dtl_cob_apl_entry)
-            
-            # Add DTL_DOC_COB_T entry
-            dtl_doc_cob_entry = {
-                "ID_DTL_DOC_COB_T": i,
-                "ID_RBO_COB_T": random.randint(1000, 9999),
-                "_indice": i
-            }
-            response["CO"]["DTL_DOC_COB_T"].append(dtl_doc_cob_entry)
+        
+        # Generate DTL_DOC_COB_T entries (always 1 record)
+        dtl_doc_cob_entry = {
+            "ID_DTL_DOC_COB_T": 1,
+            "ID_RBO_COB_T": random.randint(1000, 9999),
+            "_indice": 1
+        }
+        response["CO"]["DTL_DOC_COB_T"].append(dtl_doc_cob_entry)
         
         return status_code, response
     

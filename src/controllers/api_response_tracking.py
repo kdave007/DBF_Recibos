@@ -197,7 +197,7 @@ class APIResponseTracking:
             bool: True if the update was successful, False otherwise
         """
         
-        receipts = records.get('recibos')   
+        receipts = records.get('recibos') 
         
         return self.resp_tracking.update_receipt_status(receipts)
 

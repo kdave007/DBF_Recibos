@@ -17,6 +17,7 @@ from src.utils.get_enc import EncEnv
 from src.controllers.pending_records_controller import PendingRecordsController
 from src.controllers.get_pendings_req import GetPendingReq
 from src.controllers.verify_document import VerifyDocument
+from src.controllers.payload_formatter import PayloadFormatter
 
 # Load environment variables
 load_dotenv()
@@ -34,6 +35,7 @@ class OP:
         self.pending_records = PendingRecordsController(self.db_config)
         self.get_pending = GetPendingReq()
         self.verify = VerifyDocument()
+        self.payload_formatter = PayloadFormatter()
         self.sql_enabled = self.env.get('SQL_ENABLED', 'True').lower() == 'true'
 
         self.bypass_ca = False
@@ -75,19 +77,23 @@ class OP:
             print(f'RECORD FOUND {record}')
             print(f'------')
              
-            # self.verify.isReady(record.get('dbf_record', {}))
-            # sys.exit()
-            # if not self.verify.isReady(record.get('dbf_record', {})):
-                # total_failed_op += 1
-            logging.info(f"operation skipping folio : {record.get('folio')}")
-            #continue
+           
             
             if tipo_doc == "DV":
                 base_url = self.env.get('API_BASE_URL_DV')
 
-            # Make the first API call
-            waiting_line_result = self.send_req.waiting_line(record, tipo_doc, base_url, api_key)
+            # Format the payload using PayloadFormatter
+            formatted_payload = self.payload_formatter.get(record)
+            
+            if not self.verify.isReady(formatted_payload):
+                total_failed_op += 1
+                logging.info(f"operation skipping folio : {record.get('folio')} due to invalid document value or formatt")
+                continue
+            
 
+            # Make the first API call
+            waiting_line_result = self.send_req.waiting_line(record, formatted_payload, tipo_doc, base_url, api_key)
+            
             # print(f"waiting line result : {waiting_line_result}")
 
             # Check if the first request was successful
@@ -168,6 +174,7 @@ class OP:
             results = self.get_pending.send(record, tipo_doc)
 
             print(f'GET REQUEST  {folio}')
+            print(f'%%%%%%%%%%%%%%%%%%%%%%%%%%%%% %%%%%%%%%%% {results['success'][0].get('recibos')}')
 
             if results['success']:
                 total_successfull_op += 1

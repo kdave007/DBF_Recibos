@@ -219,7 +219,7 @@ class ResponseTracking:
             
             # Process each detail record
             for record in details:
-                print(f' //////////      insert this record {record}')
+             
                 estado = record.get('estado')
                 folio = record.get('folio')
                 new_id = record.get('id')
@@ -288,9 +288,13 @@ class ResponseTracking:
                 return False
                 
             cursor = conn.cursor()
+           
             
             # Process each receipt record
             for record in receipts:
+
+                # print(f"/*/*/*/*/*/*/*/*/*/*/*/*/*/ RECORD recibo update {record}")
+
                 estado = record.get('estado')
                 folio = record.get('folio')
                 new_id = record.get('id')

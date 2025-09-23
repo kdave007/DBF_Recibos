@@ -216,17 +216,17 @@ class GetPendingReq:
                     # Process CO (RECIBOS COBRADOS) data with new structure
                     if 'CO' in response_json and isinstance(response_json['CO'], dict):
                         # Convert CO section to a JSON string
-                        for receipt in response_json['CO']:
+                     
 
-                            resp_string = json.dumps(response_json['CO'])
-                            recibos_data = {
-                                'id': id_value,
-                                'folio': folio,
-                                'respuesta': resp_string,
-                                'estado': estados['CO']
-                            }
+                        resp_string = json.dumps(response_json['CO'])
+                        recibos_data = {
+                            'id': id_value,
+                            'folio': folio,
+                            'respuesta': resp_string,
+                            'estado': estados['CO']
+                        }
                         
-                            success_entry['recibos'].append(recibos_data)
+                        success_entry['recibos'].append(recibos_data)
                     
                     # Add to success results
                 
