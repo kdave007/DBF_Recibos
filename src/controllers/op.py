@@ -87,7 +87,7 @@ class OP:
             
             if not self.verify.isReady(formatted_payload):
                 total_failed_op += 1
-                logging.info(f"operation skipping folio : {record.get('folio')} due to invalid document value or formatt")
+                logging.info(f"operation skipping folio : {record.get('folio')} due to invalid document or formatt")
                 continue
             
 
@@ -174,7 +174,6 @@ class OP:
             results = self.get_pending.send(record, tipo_doc)
 
             print(f'GET REQUEST  {folio}')
-            print(f'%%%%%%%%%%%%%%%%%%%%%%%%%%%%% %%%%%%%%%%% {results['success'][0].get('recibos')}')
 
             if results['success']:
                 total_successfull_op += 1

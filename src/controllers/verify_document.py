@@ -6,7 +6,7 @@ import json
 class VerifyDocument:
 
    def isReady(self, record):
-      logging.info(f'Validating record: {record.get('num_doc')}')
+      print(f'Validating record: {record.get('num_doc')}')
       # print(json.dumps(record, indent=2, default=str))
       
       # Check header fields

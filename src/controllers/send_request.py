@@ -14,7 +14,7 @@ from decimal import Decimal
 from datetime import datetime, date
 from dotenv import load_dotenv
 from src.utils.get_enc import EncEnv
-from src.controllers.verify_document import VerifyDocument
+
 
 # Load environment variables
 load_dotenv()
