@@ -2,6 +2,7 @@ import sqlite3
 import json
 import logging
 from src.config.db_config import SQLiteConnection
+from src.db.db_connection_pool import DBConnectionPool
 
 
 class APIRequestTracking:
@@ -18,6 +19,7 @@ class APIRequestTracking:
         """
         self.db_config = db_config
         self.table_name = "api_logs"
+        self.pool = DBConnectionPool(db_config)
         self._create_table()
     
     def _create_table(self):
@@ -134,19 +136,23 @@ class APIRequestTracking:
         WHERE folio = ? AND post_response = ?
         """
         
+        conn = None
         try:
-            with sqlite3.connect(self.db_config['database']) as conn:
-                cursor = conn.cursor()
-                cursor.execute(update_sql, (get_response, folio, post_response_id))
-                rows_affected = cursor.rowcount
-                conn.commit()
-                if rows_affected > 0:
-                    logging.info(f"API GET response updated for folio {folio} with POST ID {post_response_id}")
-                else:
-                    logging.warning(f"No matching record found for folio {folio} with POST ID {post_response_id}")
+            conn = self.pool.get_connection()
+            cursor = conn.cursor()
+            cursor.execute(update_sql, (get_response, folio, post_response_id))
+            rows_affected = cursor.rowcount
+            conn.commit()
+            if rows_affected > 0:
+                logging.info(f"API GET response updated for folio {folio} with POST ID {post_response_id}")
+            else:
+                logging.warning(f"No matching record found for folio {folio} with POST ID {post_response_id}")
         except sqlite3.Error as e:
             logging.error(f"Error updating API GET response for folio {folio}: {e}")
             raise
+        finally:
+            if conn:
+                self.pool.release_connection(conn)
 
     def get_logs_by_folio(self, folio: str):
         """

@@ -74,7 +74,8 @@ class SendRequest:
         # Add decorative logging for sending folio
         border = "=" * 80
 
-        if len(dbf_record.get('detalles', [])) == 0 or (len(dbf_record.get('recibos', [])) == 0 and tipo_doc == "FA") :
+        # if len(dbf_record.get('detalles', [])) == 0 or (len(dbf_record.get('recibos', [])) == 0 and tipo_doc == "FA") :
+        if len(dbf_record.get('detalles', [])) == 0 :
             logging.warning(f"Declined send request for folio {folio} found with {len(dbf_record.get('detalles', []))} detalles and {len(dbf_record.get('recibos', []))} recibos")
             results['failed'].append({
                         'folio': folio,

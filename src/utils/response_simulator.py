@@ -138,3 +138,62 @@ class ResponseSimulator:
                 raise ValueError("Response is not JSON format")
         
         return MockResponse(id_value)
+
+    @staticmethod
+    def simulate_error_response_with_empty_arrays(folio):
+        """
+        Simulate an error response with empty DTL_COB_APL_T array like in the debug image.
+        
+        Args:
+            folio: The folio number for the response
+            
+        Returns:
+            MockResponse: A mock response object with error message and empty arrays
+        """
+        # Create response that matches the error in the image
+        error_response = {
+            "CA": {
+                "folio": folio,
+                "id": random.randint(1000, 9999)
+            },
+            "CO": {
+                "CTA_COR_T": [
+                    {
+                        "_indice": 1,
+                        "id": random.randint(1000, 9999)
+                    }
+                ],
+                "DTL_COB_APL_T": [],  # Empty array - this causes the error
+                "DTL_DOC_COB_T": [
+                    {
+                        "ID_DTL_DOC_COB_T": 1,
+                        "ID_RBO_COB_T": random.randint(1000, 9999),
+                        "_indice": 1
+                    }
+                ]
+            },
+            "MSG": "ERROR EN EL PROCESO DE DTL_COB_APL_T || ",
+            "PA": [
+                {
+                    "_indice": 1,
+                    "art": "5169",
+                    "id": random.randint(10000, 99999)
+                }
+            ],
+            "ST": "ER"  # Error status
+        }
+        
+        class MockResponse:
+            def __init__(self, json_data):
+                self.status_code = 200
+                self.json_data = json_data
+                self.text = json.dumps(json_data)
+                self.headers = {
+                    'Content-Type': 'application/json',
+                    'Date': datetime.now().strftime('%a, %d %b %Y %H:%M:%S GMT')
+                }
+            
+            def json(self):
+                return self.json_data
+        
+        return MockResponse(error_response)

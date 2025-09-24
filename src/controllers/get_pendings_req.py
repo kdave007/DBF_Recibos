@@ -151,45 +151,123 @@ class GetPendingReq:
                 if 'CA' not in response_json:
                     logging.error(f"Missing CA section in response for folio {folio}")
                     print(f"Missing CA section in response for folio {folio}")
-                    raise ValueError(" get_pendings_req :: Invalid response format: CA section is missing")
+                    results['failed'].append({
+                        'folio': folio,
+                        'fecha_emision': record.get('fecha'),
+                        'hash': record.get('dbf_hash', ''),
+                        'status': response.status_code,
+                        'error_msg': "Missing CA section in response",
+                        'json_resp': formatted_json
+                    })
+                    return results
                 elif not response_json['CA'] or (isinstance(response_json['CA'], dict) and len(response_json['CA']) == 0):
                     logging.error(f"Empty CA section in response for folio {folio}")
                     print(f"Empty CA section in response for folio {folio}")
-                    raise ValueError(" get_pendings_req :: Invalid response format: Empty CA section in response")
+                    results['failed'].append({
+                        'folio': folio,
+                        'fecha_emision': record.get('fecha'),
+                        'hash': record.get('dbf_hash', ''),
+                        'status': response.status_code,
+                        'error_msg': "Empty CA section in response",
+                        'json_resp': formatted_json
+                    })
+                    return results
 
                 # Validate that PA exists and is not empty
                 if 'PA' not in response_json:
                     logging.error(f"Missing PA section in response for folio {folio}")
                     print(f"Missing PA section in response for folio {folio}")
-                    raise ValueError(" get_pendings_req :: Invalid response format: PA section is missing")
+                    results['failed'].append({
+                        'folio': folio,
+                        'fecha_emision': record.get('fecha'),
+                        'hash': record.get('dbf_hash', ''),
+                        'status': response.status_code,
+                        'error_msg': "Missing PA section in response",
+                        'json_resp': formatted_json
+                    })
+                    return results
                 elif not response_json['PA'] or (isinstance(response_json['PA'], list) and len(response_json['PA']) == 0):
                     logging.error(f"Empty PA section in response for folio {folio}")
                     print(f"Empty PA section in response for folio {folio}")
                     estados['CA'] = "incompleto"
                     estados['PA'] = "error"
 
-                # Validate that CO exists and is not empty
+                # Validate that CO exists and check individual arrays
                 if 'CO' not in response_json:
                     logging.error(f"Missing CO section in response for folio {folio}")
                     print(f"Missing CO section in response for folio {folio}")
-                    raise ValueError(" get_pendings_req :: Invalid response format: CO section is missing")
+                    results['failed'].append({
+                        'folio': folio,
+                        'fecha_emision': record.get('fecha'),
+                        'hash': record.get('dbf_hash', ''),
+                        'status': response.status_code,
+                        'error_msg': "Missing CO section in response",
+                        'json_resp': formatted_json
+                    })
+                    return results
                 elif not response_json['CO'] or (isinstance(response_json['CO'], dict) and len(response_json['CO']) == 0):
                     logging.error(f"Empty CO section in response for folio {folio}")
                     print(f"Empty CO section in response for folio {folio}")
                     estados['CA'] = "incompleto"
                     estados['CO'] = "error"
+                else:
+                    # Check individual arrays within CO section
+                    co_section = response_json['CO']
+                    
+                    # Check DTL_COB_APL_T array
+                    if 'DTL_COB_APL_T' in co_section and isinstance(co_section['DTL_COB_APL_T'], list) and len(co_section['DTL_COB_APL_T']) == 0:
+                        logging.error(f"Empty DTL_COB_APL_T array in CO section for folio {folio}")
+                        print(f"Error: Empty DTL_COB_APL_T array for folio {folio}")
+                        results['failed'].append({
+                            'folio': folio,
+                            'fecha_emision': record.get('fecha'),
+                            'hash': record.get('dbf_hash', ''),
+                            'status': response.status_code,
+                            'error_msg': "Empty DTL_COB_APL_T array in CO section",
+                            'json_resp': formatted_json
+                        })
+                        return results
+                    
+                    # Check CTA_COR_T array
+                    if 'CTA_COR_T' in co_section and isinstance(co_section['CTA_COR_T'], list) and len(co_section['CTA_COR_T']) == 0:
+                        logging.error(f"Empty CTA_COR_T array in CO section for folio {folio}")
+                        print(f"Error: Empty CTA_COR_T array for folio {folio}")
+                        results['failed'].append({
+                            'folio': folio,
+                            'fecha_emision': record.get('fecha'),
+                            'hash': record.get('dbf_hash', ''),
+                            'status': response.status_code,
+                            'error_msg': "Empty CTA_COR_T array in CO section",
+                            'json_resp': formatted_json
+                        })
+                        return results
+                    
+                    # Check DTL_DOC_COB_T array
+                    if 'DTL_DOC_COB_T' in co_section and isinstance(co_section['DTL_DOC_COB_T'], list) and len(co_section['DTL_DOC_COB_T']) == 0:
+                        logging.error(f"Empty DTL_DOC_COB_T array in CO section for folio {folio}")
+                        print(f"Error: Empty DTL_DOC_COB_T array for folio {folio}")
+                        results['failed'].append({
+                            'folio': folio,
+                            'fecha_emision': record.get('fecha'),
+                            'hash': record.get('dbf_hash', ''),
+                            'status': response.status_code,
+                            'error_msg': "Empty DTL_DOC_COB_T array in CO section",
+                            'json_resp': formatted_json
+                        })
+                        return results
                 
                 
                 # Process CA (Cabecera) data
                 if 'CA' in response_json and response_json['CA']:
                     ca_data = response_json['CA']
                     id_value = ca_data.get('id')
-                    folio_str = str(ca_data.get('folio'))
+                    # folio_str = str(ca_data.get('folio'))
+                    #we do not use the response folio cause the number of digits may not match!!! 
                     logging.info(f"Response fac id {id_value}")
                     
                     # Create success entry
                     success_entry = {
-                        'folio': folio_str,
+                        'folio': folio,
                         'id': id_value,
                         'accion':"registrado",
                         'estado':estados['CA'],
