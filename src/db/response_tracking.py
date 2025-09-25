@@ -168,9 +168,9 @@ class ResponseTracking:
             # Execute the query
             cursor.execute(query, (estado, accion, new_id, folio, tipo_doc))
             updated_id = cursor.fetchone()
-            conn.commit()
             
             if updated_id:
+                conn.commit()
                 logging.info(f"Successfully updated status for record with folio {folio}")
                 return True
             else:
@@ -239,13 +239,15 @@ class ResponseTracking:
                 
                 cursor.execute(query, (estado, new_id, folio, indice))
                 updated_id = cursor.fetchone()
-                conn.commit()
                 
                 if updated_id:
                     logging.info(f"Successfully updated detail status for folio {folio}, indice {indice}")
                     success_count += 1
                 else:
                     logging.warning(f"No detail record found for folio {folio}, indice {indice}")
+            
+            # Commit all changes at once after processing all records
+            conn.commit()
             
             return success_count == total_count  # Return True only if all updates succeeded
                 
@@ -314,13 +316,15 @@ class ResponseTracking:
                 
                 cursor.execute(query, (estado, response_data, folio))
                 updated_id = cursor.fetchone()
-                conn.commit()
                 
                 if updated_id:
                     logging.info(f"Successfully updated receipt status for folio {folio}")
                     success_count += 1
                 else:
                     logging.warning(f"No receipt record found for folio {folio}")
+            
+            # Commit all changes at once after processing all records
+            conn.commit()
             
             return success_count == total_count  # Return True only if all updates succeeded
                 

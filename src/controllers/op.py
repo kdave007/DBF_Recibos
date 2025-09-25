@@ -87,7 +87,8 @@ class OP:
             
             if not self.verify.isReady(formatted_payload):
                 total_failed_op += 1
-                logging.info(f"operation skipping folio : {record.get('folio')} due to invalid document or formatt")
+                logging.warning(f"operation skipping folio : {record.get('folio')} due to invalid document or formatt")
+                self._retry_tracker(record)
                 continue
             
 

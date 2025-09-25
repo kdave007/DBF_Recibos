@@ -11,16 +11,19 @@ class VerifyDocument:
       
       # Check header fields
       if not self.check_header(record):
+         logging.warning(f'Validating record: {record.get('num_doc')} cannot be send')
          return False
       
       # Check details if they exist
       details = record.get('detalles', [])
       if details and not self.check_details(details):
+         logging.warning(f'Validating record: {record.get('num_doc')} cannot be send')
          return False
       
       # Check receipts if they exist
       receipts = record.get('recibos', [])
       if receipts and not self.check_receipts(receipts):
+         logging.warning(f'Validating record: {record.get('num_doc')} cannot be send')
          return False
       
       # All validations passed
@@ -31,7 +34,7 @@ class VerifyDocument:
       # Check if emp exists and is not empty or just whitespace
       emp = record.get('emp')
       if emp is None or emp.strip() == "":
-         logging.error(f"verify document :: 'emp' field is missing or empty in record {record.get('emp')}")
+         logging.error(f"verify document :: folio {record.get('num_doc')} 'emp' field is missing or empty in record {record.get('emp')}")
          return False
       
       # Check emp_div field

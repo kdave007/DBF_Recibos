@@ -42,6 +42,7 @@ class RetriesTracking:
                 existing_record = cursor.fetchone()
                 
                 if existing_record:
+                    logging.warning(f"updating retry record by folio {folio}")
                     # Update existing record
                     update_query = """
                         UPDATE reintentos_fac_venta
@@ -53,6 +54,7 @@ class RetriesTracking:
                     cursor.execute(update_query, (completado, fecha_registro, folio))
                 else:
                     # Insert new record
+                    logging.warning(f"inserting new retry record by folio {folio}")
                     insert_query = """
                         INSERT INTO reintentos_fac_venta (
                             folio, intentos, completado, fecha_del_registro
@@ -68,10 +70,10 @@ class RetriesTracking:
                 result = cursor.fetchone()
                 
                 if result:
-                    print(f"Successfully inserted/updated retry tracking for folio {folio}")
+                    logging.info(f"Successfully inserted/updated retry tracking for folio {folio}")
                     return True
                 else:
-                    print(f"Failed to insert/update retry tracking for folio {folio}")
+                    logging.info(f"Failed to insert/update retry tracking for folio {folio}")
                     return False
                         
         except sqlite3.Error as e:

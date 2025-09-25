@@ -310,8 +310,8 @@ class GetPendingReq:
                 
                     results['success'].append(success_entry)
                     
-                    print(f"Successfully processed response for folio {folio_str}")
-                    # logging.info(f"Successfully processed response for folio {folio_str}")
+                    print(f"Successfully processed response for folio {folio}")
+                    # logging.info(f"Successfully processed response for folio {folio}")
             except Exception as e:
                 print(f"get_pendings :: Error processing response for folio   {folio}: {(e)}")
                 logging.info(f"get_pendings :: Error processing response for folio   {folio}: {(e)}")
